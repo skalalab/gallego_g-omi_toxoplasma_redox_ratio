@@ -1,0 +1,824 @@
+
+
+```{r}
+setwd("C:/Users/ktweed/Desktop/Hold/")
+#need to install and load R.matlab
+library(R.matlab)
+library(gridExtra)
+library(ggplot2)
+library(gtable)
+library(gtools)
+library(plyr)
+library(utils)
+mydata <- readMat('24hpi_Toxo.mat') #this reads in the data file
+mydata = lapply(mydata, unlist, use.names = F) #this won't look like it does anything
+mydata <- lapply(mydata, `length<-`, max(lengths(mydata)))
+df1 <- as.data.frame(mydata) #this creats the first data frame 
+df1$Group <- rep("Toxo", nrow(df1)) 
+df1$Time <- rep("24 hrs", nrow(df1)) 
+
+mydata2 <- readMat("24hpi_MediaInhibitor.mat")
+mydata2 <- lapply(mydata2, `length<-`, max(lengths(mydata2))) 
+df2 <- as.data.frame(mydata2)
+df2$Group <- rep("Media + Inhibitor", nrow(df2)) 
+df2$Time <- rep("24 hrs", nrow(df2)) 
+
+mydata3 <- readMat("24hpi_MediaOnly.mat")
+mydata3 <- lapply(mydata3, `length<-`, max(lengths(mydata3))) 
+df3 <- as.data.frame(mydata3)
+df3$Group <- rep("Media", nrow(df3)) 
+df3$Time <- rep("24 hrs", nrow(df3)) 
+
+mydata4 <- readMat("24hpi_ToxoInhibitor.mat")
+mydata4 <- lapply(mydata4, `length<-`, max(lengths(mydata4)))
+df4 <- as.data.frame(mydata4)
+df4$Group <- rep("Toxo + Inhibitor", nrow(df4)) 
+df4$Time <- rep("24 hrs", nrow(df4))
+
+mydata5 <- readMat("90mpi_MediaInhibitor.mat")
+mydata5 <- lapply(mydata5, `length<-`, max(lengths(mydata5)))
+df5 <- as.data.frame(mydata5)
+df5$Group <- rep("Media + Inhibitor", nrow(df5))
+df5$Time <- rep("90 min", nrow(df5)) 
+
+mydata6 <- readMat("90mpi_MediaOnly.mat")
+mydata6 <- lapply(mydata6, `length<-`, max(lengths(mydata6)))
+df6 <- as.data.frame(mydata6)
+df6$Group <- rep("Media", nrow(df6))
+df6$Time <- rep("90 min", nrow(df6)) 
+
+mydata7 <- readMat("90mpi_Toxo.mat")
+mydata7 <- lapply(mydata7, `length<-`, max(lengths(mydata7)))
+df7 <- as.data.frame(mydata7)
+df7$Group <- rep("Toxo", nrow(df7))
+df7$Time <- rep("90 min", nrow(df7)) 
+
+mydata8 <- readMat("90mpi_ToxoInhibitor.mat")
+mydata8 <- lapply(mydata8, `length<-`, max(lengths(mydata8)))
+df8 <- as.data.frame(mydata8)
+df8$Group <- rep("Toxo + Inhibitor", nrow(df8))
+df8$Time <- rep("90 min", nrow(df8)) 
+
+newdata <- rbind.fill(df1, df2, df3, df4, df5, df6, df7, df8) 
+
+newdata$Group <- with(newdata, relevel(as.factor(Group), c("Media")))
+newdata$Time <- with(newdata, relevel(as.factor(Time), c("90 min")))
+
+newdata_cells <- newdata[,c(1,2,3,4,5,6,7,8,9,10,11,12,14,27,28)]
+newdata_toxo <- newdata[,c(13,15,16,17,18,19,20,21,22,23,24,25,26,27,28)]
+
+newdata_cells$has.toxo.out <- with(newdata, relevel(as.factor(has.toxo.out), c("2")))
+newdata_toxo$in.cell.out <- with(newdata, relevel(as.factor(in.cell.out), c("2")))
+
+toxdata <-  subset(newdata_cells, Group == "Toxo")
+toxdata2 <-  subset(toxdata, N.a1.out != "NA")
+
+toxinhdata <-  subset(newdata_cells, Group == "Toxo + Inhibitor")
+toxinhdata2 <-  subset(toxinhdata, N.a1.out != "NA")
+
+meddata <-  subset(newdata_cells, Group == "Media")
+medinhdata <-  subset(newdata_cells, Group == "Media + Inhibitor")
+
+alltoxo <- rbind(toxdata,toxinhdata)
+alltoxo <- subset(alltoxo, !is.na(F.a1.out))
+allctrl <- rbind(meddata,medinhdata)
+allctrl <- subset(allctrl, !is.na(F.a1.out))
+
+
+newdata_infected <- subset(toxinhdata2, has.toxo.out == "1")
+newdata_notinfected <- subset(newdata, has.toxo.out == "2")
+
+newdata_toxo <- subset(newdata_toxo, !is.na(tF.a1.out))
+
+write.csv(newdata_toxo,'010319_toxoplasma.csv')
+
+```
+want:
+infected vs not infected per toxo and toxo inhibitor, 
+```{r Time}
+fit <- lm(rr.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(rr.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(rr.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(rr.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+rr <- ggplot(data=newdata, aes(y=rr.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle("Redox Ratio")+
+  ylab(bquote("Redox Ratio"))+
+  xlab("Group")+
+  ylim(c(0.6,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(1,1,1,1), label=Pval,color=NULL), size=12)
+rr
+
+fit <- lm(N.tm.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(N.tm.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(N.tm.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(N.tm.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Ntm <- ggplot(data=newdata, aes(y=N.tm.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[m]*""))+
+  ylab(bquote("NAD(P)H "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(0.6,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(1000,1000,1000,1100), label=Pval,color=NULL), size=12)
+Ntm
+
+fit <- lm(N.t1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(N.t1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(N.t1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(N.t1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Nt1 <- ggplot(data=newdata, aes(y=N.t1.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[1]*""))+
+  ylab(bquote("NAD(P)H "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(0.6,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(600,600,600,600), label=Pval,color=NULL), size=12)
+Nt1
+
+fit <- lm(N.t2.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(N.t2.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(N.t2.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(N.t2.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Nt2 <- ggplot(data=newdata, aes(y=N.t2.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[2]*""))+
+  ylab(bquote("NAD(P)H "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(0.6,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(3000,3000,3000,3000), label=Pval,color=NULL), size=12)
+Nt2
+
+fit <- lm(N.a1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(N.a1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(N.a1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(N.a1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Na1 <- ggplot(data=newdata, aes(y=N.a1.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*alpha[1]*""))+
+  ylab(bquote("NAD(P)H "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  ylim(c(65,90))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(85,85,85,85), label=Pval,color=NULL), size=12)
+Na1
+
+# START OF FAD
+fit <- lm(F.a1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(F.a1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(F.a1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(F.a1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Fa1 <- ggplot(data=newdata, aes(y=F.a1.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*alpha[1]*""))+
+  ylab(bquote("FAD "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  ylim(c(65,90))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(85,85,85,85), label=Pval,color=NULL), size=12)
+Fa1
+
+fit <- lm(F.t1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(F.t1.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(F.t1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(F.t1.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Ft1 <- ggplot(data=newdata, aes(y=F.t1.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[1]*""))+
+  ylab(bquote("FAD "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(65,90))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(350,350,350,350), label=Pval,color=NULL), size=12)
+Ft1
+
+fit <- lm(F.t2.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(F.t2.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(F.t2.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(F.t2.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Ft2 <- ggplot(data=newdata, aes(y=F.t2.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[2]*""))+
+  ylab(bquote("FAD "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(1600,2500))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(2400,2400,2400,2400), label=Pval,color=NULL), size=12)
+Ft2
+
+fit <- lm(F.tm.out ~ as.factor(Time), data=subset(allctrl, Group == "Media"))
+fit2 <- lm(F.tm.out ~ as.factor(Time), data=subset(allctrl, Group == "Media + Inhibitor"))
+fit3 <- lm(F.tm.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo"))
+fit4 <- lm(F.tm.out ~ as.factor(Time), data=subset(alltoxo, Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Time = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Group = c("Media","Media + Inhibitor","Toxo","Toxo + Inhibitor"))
+
+Ftm <- ggplot(data=newdata, aes(y=F.tm.out, x=as.factor(Time), color = as.factor(Time))) +facet_grid(~Group)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[m]*""))+
+  ylab(bquote("FAD "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(380,1000))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(900,900,900,900), label=Pval,color=NULL), size=12)
+Ftm
+
+#fig11S<-grid.arrange(rr,Nt1,Nt2,Ntm,Na1,Ft1,Ft2,Ftm,Fa1, ncol=3)
+ #ggsave("TimeGraphs.jpg",fig11S, width = 24, height = 18, dpi=300)
+```
+
+```{r Group}
+fit5 <- lm(rr.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(rr.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+rr <- ggplot(data=newdata, aes(y=rr.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle("Redox Ratio")+
+  ylab(bquote("Redox Ratio"))+
+  xlab("Group")+
+  ylim(c(0.5,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(1,1,1,1,1,1), label=Pval,color=NULL), size=12)
+rr
+
+fit5 <- lm(N.a1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(N.a1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Na1 <- ggplot(data=newdata, aes(y=N.a1.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*alpha[1]*""))+
+  ylab(bquote("NAD(P)H "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  ylim(c(65,90))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(85,85,85,85,85,85), label=Pval,color=NULL), size=12)
+Na1
+
+fit5 <- lm(N.t1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(N.t1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Nt1 <- ggplot(data=newdata, aes(y=N.t1.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[1]*""))+
+  ylab(bquote("NAD(P)H "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(250,550))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(500,500,500,500,500,500), label=Pval,color=NULL), size=12)
+Nt1
+
+fit5 <- lm(N.t2.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(N.t2.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Nt2 <- ggplot(data=newdata, aes(y=N.t2.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[2]*""))+
+  ylab(bquote("NAD(P)H "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(250,550))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(3000,3000,3000,3000,3000,3000), label=Pval,color=NULL), size=12)
+Nt2
+
+fit5 <- lm(N.tm.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(N.tm.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Ntm <- ggplot(data=newdata, aes(y=N.tm.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[m]*""))+
+  ylab(bquote("NAD(P)H "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(700,1200))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(1100,1100,1100,1100,1100,1100), label=Pval,color=NULL), size=12)
+Ntm
+
+fit5 <- lm(F.tm.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(F.tm.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Ftm <- ggplot(data=newdata, aes(y=F.tm.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[m]*""))+
+  ylab(bquote("FAD "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(380,950))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(900,900,900,900,900,900), label=Pval,color=NULL), size=12)
+Ftm
+
+fit5 <- lm(F.t1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(F.t1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Ft1 <- ggplot(data=newdata, aes(y=F.t1.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[1]*""))+
+  ylab(bquote("FAD "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(380,950))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(300,300,300,300,300,300), label=Pval,color=NULL), size=12)
+Ft1
+
+fit5 <- lm(F.t2.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(F.t2.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Ft2 <- ggplot(data=newdata, aes(y=F.t2.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[2]*""))+
+  ylab(bquote("FAD "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(1700,2500))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(2400,2400,2400,2400,2400,2400), label=Pval,color=NULL), size=12)
+Ft2
+
+fit5 <- lm(F.a1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "90 min"))
+fit6 <- lm(F.a1.out ~ as.factor(Group), data=subset(newdata_cells, Time == "24 hrs"))
+
+graphLabels <- data.frame(Group = c(2,3,4),Pval=c(stars.pval(summary(fit5)$coefficients[2,4]),stars.pval(summary(fit5)$coefficients[3,4]),stars.pval(summary(fit5)$coefficients[4,4]),stars.pval(summary(fit6)$coefficients[2,4]),stars.pval(summary(fit6)$coefficients[3,4]),stars.pval(summary(fit6)$coefficients[4,4])),Time = c("90 min","90 min","90 min","24 hrs","24 hrs","24 hrs"))
+
+
+Fa1 <- ggplot(data=newdata, aes(y=F.a1.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*alpha[1]*""))+
+  ylab(bquote("FAD "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  ylim(c(68,95))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,3,4,2,3,4),y=c(90,90,90,90,90,90), label=Pval,color=NULL), size=12)
+Fa1
+
+fig11S<-grid.arrange(rr,Nt1,Nt2,Ntm,Na1,Ft1,Ft2,Ftm,Fa1, ncol=3)
+ ggsave("GroupGraphs.jpg",fig11S, width = 20, height = 18, dpi=300)
+
+```
+
+```{r Inhibitor}
+fit <- lm(rr.out ~ as.factor(Group), data=subset(allctrl, Time == "24 hrs"))
+fit2 <- lm(rr.out ~ as.factor(Group), data=subset(allctrl, Time == "90 min"))
+
+fit3 <- lm(rr.out ~ as.factor(Group), data=subset(alltoxo, Time == "24 hrs"))
+fit4 <- lm(rr.out ~ as.factor(Group), data=subset(alltoxo, Time == "90 min"))
+
+graphLabels <- data.frame(Group = c(2,3),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4])),Time = c("24 hrs","90 min"))
+graphLabels2 <- data.frame(Group = c(2,3),Pval=c(stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min"))
+
+rr <- ggplot(data=allctrl, aes(y=rr.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle("Redox Ratio")+
+  ylab(bquote("Redox Ratio"))+
+  xlab("Group")+
+  theme(legend.position = "none")+
+  ylim(c(0.6,1.1))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2),y=c(1,1), label=Pval,color=NULL), size=12)
+rr
+
+rr2 <- ggplot(data=alltoxo, aes(y=rr.out, x=as.factor(Group), color = as.factor(Group))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle("Redox Ratio")+
+  ylab(bquote("Redox Ratio"))+
+  xlab("Group")+
+  ylim(c(0.6,1.1))+
+  theme(legend.position = "none")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels2,aes(x=c(2,2),y=c(1,1), label=Pval,color=NULL), size=12)
+rr2
+```
+
+```{r infected cells within group}
+fit <- lm(rr.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(rr.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(rr.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(rr.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+rr <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=rr.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle("Redox Ratio")+
+  ylab(bquote("Redox Ratio"))+
+  xlab("Group")+
+  ylim(c(0.6,1.1))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(1,1,1,1), label=Pval,color=NULL), show.legend = F, size=12)
+rr
+
+
+fit <- lm(N.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(N.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(N.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(N.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Nt1 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=N.t1.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[1]*""))+
+  ylab(bquote("NAD(P)H "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(250,550))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(500,500,500,500), label=Pval,color=NULL), show.legend = F, size=12)
+Nt1
+
+
+fit <- lm(N.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(N.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(N.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(N.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Nt2 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=N.t2.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[2]*""))+
+  ylab(bquote("NAD(P)H "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(250,550))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(2600,2600,2600,2600), label=Pval,color=NULL), show.legend = F, size=12)
+Nt2
+
+fit <- lm(N.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(N.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(N.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(N.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Ntm <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=N.tm.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*tau[m]*""))+
+  ylab(bquote("NAD(P)H "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(750,1150))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(1100,1100,1100,1100), label=Pval,color=NULL), show.legend = F, size=12)
+Ntm
+
+
+fit <- lm(N.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(N.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(N.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(N.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Na1 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=N.a1.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("NAD(P)H "*alpha[1]*""))+
+  ylab(bquote("NAD(P)H "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  #ylim(c(750,1150))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(80,80,80,80), label=Pval,color=NULL), show.legend = F, size=12)
+Na1
+
+
+fit <- lm(F.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(F.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(F.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(F.a1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Fa1 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=F.a1.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*alpha[1]*""))+
+  ylab(bquote("FAD "*alpha[1]*" (%)"))+
+  xlab("Group")+
+  #ylim(c(750,1150))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(80,80,80,80), label=Pval,color=NULL), show.legend = F, size=12)
+Fa1
+
+fit <- lm(F.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(F.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(F.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(F.t1.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Ft1 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=F.t1.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[1]*""))+
+  ylab(bquote("FAD "*tau[1]*" (ps)"))+
+  xlab("Group")+
+  ylim(c(150,320))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(300,300,300,300), label=Pval,color=NULL), show.legend = F, size=12)
+Ft1
+
+
+fit <- lm(F.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(F.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(F.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(F.t2.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Ft2 <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=F.t2.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[2]*""))+
+  ylab(bquote("FAD "*tau[2]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(150,320))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(2300,2300,2300,2300), label=Pval,color=NULL), show.legend = F, size=12)
+Ft2
+
+fit <- lm(F.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo"))
+fit2 <- lm(F.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo"))
+fit3 <- lm(F.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "24 hrs" & Group == "Toxo + Inhibitor"))
+fit4 <- lm(F.tm.out ~ as.factor(has.toxo.out), data=subset(alltoxo, Time == "90 min" & Group == "Toxo + Inhibitor"))
+
+graphLabels <- data.frame(Group = c(2,3,4,5),Pval=c(stars.pval(summary(fit)$coefficients[2,4]),stars.pval(summary(fit2)$coefficients[2,4]),stars.pval(summary(fit3)$coefficients[2,4]),stars.pval(summary(fit4)$coefficients[2,4])),Time = c("24 hrs","90 min","24 hrs","90 min"))
+
+
+Ftm <- ggplot(data=subset(alltoxo, has.toxo.out!="NA"), aes(y=F.tm.out, x=(Group), color = (has.toxo.out))) +facet_grid(~Time)+
+  geom_boxplot(lwd=2) +
+  #scale_color_manual(values=c("black","blue"))+
+  theme_classic(base_size=18) +
+  theme(axis.text.y = element_text(color='black', size=16))+
+  theme(axis.text.x = element_text(color='black', size=16))+
+  theme(axis.title.y=element_text(size=18))+
+  theme(legend.text=element_text(size=12))+
+  ggtitle(bquote("FAD "*tau[m]*""))+
+  ylab(bquote("FAD "*tau[m]*" (ps)"))+
+  xlab("Group")+
+  #ylim(c(150,320))+
+  scale_color_manual(values=c("blue","red"), guide_legend(title = "Infection Status"),labels = c("Infected","Not Infected") )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  geom_text(data=graphLabels,aes(x=c(2,2,2,2),y=c(600,600,600,600), label=Pval,color=NULL), show.legend = F, size=12)
+Ftm
+
+fig11S<-grid.arrange(rr,Nt1,Nt2,Ntm,Na1,Ft1,Ft2,Ftm,Fa1, ncol=3)
+ggsave("InfectionGraphs.jpg",fig11S, width = 24, height = 18, dpi=300)
+```
+
+
+
+
+
+```{r}
+fig11S<-grid.arrange(rr,Nt1,Nt2,Ntm,Na1,Ft1,Ft2,Ftm,Fa1, ncol=3)
+ ggsave("TimeGraphs.jpg",fig11S, width = 20, height = 18, dpi=300)
+```
+
+
+
+

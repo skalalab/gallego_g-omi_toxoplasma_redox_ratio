@@ -1,0 +1,22 @@
+
+
+```{r}
+folder_name <- choose.dir(default = "", caption = "Select folder")
+sub_folders <- list.dirs(folder_name, full.names = TRUE, recursive = FALSE)
+split <- strsplit(sub_folders, '""')
+sdt_file = 'LifetimeData_Cycle00001_000001.sdt'
+for (i in split) 
+{
+  B = list.files(i)
+  b = strsplit(B, '""')
+  for (j in b){
+    if (j == sdt_file){
+      D = strsplit(i, "/")
+      setwd(folder_name)
+      E <- paste(D[[1]][2], ".sdt", sep = "")
+      file.rename(paste(as.character(i),sdt_file, sep = "/"), paste(folder_name,E, sep = "/"))
+    }
+  }
+}
+```
+
