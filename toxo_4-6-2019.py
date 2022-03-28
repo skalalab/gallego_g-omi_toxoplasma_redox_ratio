@@ -12,14 +12,14 @@ import pathlib
 import numpy as np
 import math
 
+
 from helper import load_image
 
 path_experiment = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_dataset = path_experiment / "3-18-2019" / "03182019_Katie"
+path_dataset = path_experiment / "4-6-2019" / "040619_Katie_SPC"
 
 path_output = path_experiment / "dictionaries"
-
-path_excel = r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\3-18-2019\3-18-2019-keys.xlsx"
+path_excel = r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\04-19-2019-keys.xlsx"
 
 list_all_files = list(path_dataset.rglob("*"))
 list_str_all_files = list(map(str,list_all_files))
@@ -27,12 +27,13 @@ df_dataset = pd.read_excel(path_excel)
 print(df_dataset.head())
 
 
+
 #%%    
 
 suffixes = {
     'im_photons': '_photons .tif',
-    'im_toxo': '_Cycle00001_Ch1_000001.ome.tif',
-    'mask_cell': '_photons _cells.tiff',
+    'im_toxo': '_photons .tif',
+    'mask_cell': '_photons _cells.tif',
     # 'mask_cytoplasm': '_photons_cyto.tiff',
     'mask_toxo': '_Cycle00001_Ch1_000001.ome_toxo.tiff', 
     # 'mask_nuclei': '_photons_nuclei.tiff',
@@ -56,6 +57,18 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
     # generate image handles 
     handle_nadh = base_name + str(int(row_data.nadh)).zfill(3)
+    
+    # one or more images missing, skipping row 
+    if  handle_nadh == 'Cells-001' or  \
+        handle_nadh == 'Cells-219' or \
+        handle_nadh == 'Cells-304' or \
+        handle_nadh == 'Cells-306' or \
+        handle_nadh == 'Cells-240' \
+        : 
+        print(f"skipping: {handle_nadh}")
+        continue
+    
+    # generate handle for fad
     handle_fad = base_name + str(int(row_data.fad)).zfill(3)
     bool_has_toxo = False
     if not math.isnan(row_data.toxo):
@@ -63,25 +76,16 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         handle_toxo = base_name + str(int(row_data.toxo)).zfill(3)
     
     
-    # skip 
-    if  handle_nadh == 'Cells-007' or \
-        handle_nadh == 'Cells-030' or \
-        handle_nadh == 'Cells-070' or \
-        handle_nadh == 'Cells-340' or \
-        handle_nadh == 'Cells-001' or \
-        handle_toxo == 'Cells-105' or\
-        handle_nadh == 'Cells-133'  \
-            : 
-                
-        print(f"skipping row nadh: {handle_nadh}")
-        continue
+
     
     ##### assemble dataset    
     month, day, year, _= Path(path_excel).stem.split("-")
     date = f"{month}_{day}_{year}"
     handle = f"{date}_idx_{idx}"
     dict_dataset[handle] = {}
-
+    
+    if idx ==13:
+     print(13)
     
     ### paths to nadh
     # paths to files
@@ -97,6 +101,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # path_mask_nuclei = list(filter(re.compile(handle_nadh +  suffixes['mask_nuclei']).search, list_str_all_files))[0]    
     
     dict_dataset[handle]["mask_cell"] = path_mask_cell
+
     
     # paths to fad 
     # paths to images
@@ -109,6 +114,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # paths to toxo
     if bool_has_toxo:
+        continue
         dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
         dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(handle_toxo + suffixes['mask_toxo']).search, list_str_all_files))[0]
     
@@ -117,12 +123,12 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["time_hours"] = row_data.Time.split(" ",1)[0]
     dict_dataset[handle]["experiment"] = str(row_data.experiment).split(" ", 1)[0]
 
+
     ########### plots for visualization
     # fig, ax = plt.subplots(3,5, figsize=(10,5))
     
     # fig.suptitle(f"dataset: {handle}")
-    
-    # # nadh 
+     
     # ax[0,0].imshow(load_image(dict_dataset[handle]["nadh_photons"]))
     # ax[0,0].set_axis_off()
     # ax[0,0].set_title("nadh")
@@ -185,12 +191,13 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # plt.show()
     
-#%%
-
+    #### add other data 
     
+    #%%
     df_dataset = pd.DataFrame(dict_dataset).transpose()
     df_dataset.index.name = "index"
     df_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+    
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
