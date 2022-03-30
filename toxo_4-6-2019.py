@@ -53,6 +53,7 @@ base_name = "Cells-"
 dict_dataset = {}
 
 for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
+    pass
     # print(row_data)
     
     # generate image handles 
@@ -63,6 +64,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         handle_nadh == 'Cells-219' or \
         handle_nadh == 'Cells-304' or \
         handle_nadh == 'Cells-306' or \
+        handle_nadh == 'Cells-309' or \
+        handle_nadh == 'Cells-312' or \
         handle_nadh == 'Cells-240' \
         : 
         print(f"skipping: {handle_nadh}")
@@ -75,17 +78,13 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         bool_has_toxo = True
         handle_toxo = base_name + str(int(row_data.toxo)).zfill(3)
     
-    
 
-    
     ##### assemble dataset    
     month, day, year, _= Path(path_excel).stem.split("-")
     date = f"{month}_{day}_{year}"
     handle = f"{date}_idx_{idx}"
     dict_dataset[handle] = {}
     
-    if idx ==13:
-     print(13)
     
     ### paths to nadh
     # paths to files
@@ -114,8 +113,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # paths to toxo
     if bool_has_toxo:
-        continue
-        dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
+        # dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
         dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(handle_toxo + suffixes['mask_toxo']).search, list_str_all_files))[0]
     
     # additional information
@@ -193,10 +191,10 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
     #### add other data 
     
-    #%%
-    df_dataset = pd.DataFrame(dict_dataset).transpose()
-    df_dataset.index.name = "index"
-    df_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+    ##%%
+    df_output_dataset = pd.DataFrame(dict_dataset).transpose()
+    df_output_dataset.index.name = "index"
+    df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
     
     # 
     # #paths to toxo masks

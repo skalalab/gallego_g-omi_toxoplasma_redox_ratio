@@ -116,7 +116,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["treatment"] = row_data.treatment
     dict_dataset[handle]["time_hours"] = row_data.Time.split(" ",1)[0]
     dict_dataset[handle]["experiment"] = str(row_data.experiment).split(" ", 1)[0]
-
+    # dict_dataset[handle]["set_name"] = str(row_data.experiment).split(" ", 1)[0]
     ########### plots for visualization
     # fig, ax = plt.subplots(3,5, figsize=(10,5))
     
