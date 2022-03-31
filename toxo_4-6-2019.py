@@ -60,13 +60,20 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     handle_nadh = base_name + str(int(row_data.nadh)).zfill(3)
     
     # one or more images missing, skipping row 
-    if  handle_nadh == 'Cells-001' or  \
-        handle_nadh == 'Cells-219' or \
+    # nadh_photons : 'Cells-001_photons .tif'
+    # mask_cell : 'Cells-219_photons _cells.tif'
+    # mask_cell : 'Cells-240_photons _cells.tif'
+    # nadh_photons : 'Cells-304_photons .tif'
+    # missing fad pair for nadh 'Cells-306'
+    # mask_toxo : 'Cells-308_Cycle00001_Ch1_000001.ome_toxo.tiff'
+    # mask_toxo : 'Cells-311_Cycle00001_Ch1_000001.ome_toxo.tiff'
+    if handle_nadh == 'Cells-219' or \
+        handle_nadh == 'Cells-240' or\
         handle_nadh == 'Cells-304' or \
         handle_nadh == 'Cells-306' or \
         handle_nadh == 'Cells-309' or \
         handle_nadh == 'Cells-312' or \
-        handle_nadh == 'Cells-240' \
+        handle_nadh == 'Cells-001' \
         : 
         print(f"skipping: {handle_nadh}")
         continue
@@ -189,13 +196,12 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # plt.show()
     
-    #### add other data 
-    
-    ##%%
-    df_output_dataset = pd.DataFrame(dict_dataset).transpose()
-    df_output_dataset.index.name = "index"
-    df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
-    
+
+#%%
+df_output_dataset = pd.DataFrame(dict_dataset).transpose()
+df_output_dataset.index.name = "index"
+df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
