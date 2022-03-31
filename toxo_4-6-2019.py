@@ -31,7 +31,8 @@ print(df_dataset.head())
 #%%    
 
 suffixes = {
-    'im_photons': '_photons .tif',
+    # 'im_photons': '_photons .tif',
+    'im_photons': '_Cycle00001_Ch2_000001.ome.tif',
     'im_toxo': '_photons .tif',
     'mask_cell': '_photons _cells.tif',
     # 'mask_cytoplasm': '_photons_cyto.tiff',
@@ -69,14 +70,16 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # mask_toxo : 'Cells-311_Cycle00001_Ch1_000001.ome_toxo.tiff'
     if handle_nadh == 'Cells-219' or \
         handle_nadh == 'Cells-240' or\
-        handle_nadh == 'Cells-304' or \
         handle_nadh == 'Cells-306' or \
         handle_nadh == 'Cells-309' or \
-        handle_nadh == 'Cells-312' or \
+        handle_nadh == 'Cells-312' or\
+        handle_nadh == 'Cells-304' or \
         handle_nadh == 'Cells-001' \
         : 
         print(f"skipping: {handle_nadh}")
         continue
+        
+            
     
     # generate handle for fad
     handle_fad = base_name + str(int(row_data.fad)).zfill(3)
@@ -111,7 +114,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
     # paths to fad 
     # paths to images
-    dict_dataset[handle]["fad_photons"] = list(filter(re.compile(handle_fad + suffixes['im_photons']).search, list_str_all_files))[0]
+    dict_dataset[handle]["fad_photons"] = list(filter(re.compile(handle_fad + suffixes['im_photons'].replace("Ch2", "Ch1")).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_a1"] = list(filter(re.compile(handle_fad +  suffixes['a1[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_a2"] = list(filter(re.compile(handle_fad +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t1"] = list(filter(re.compile(handle_fad +  suffixes['t1']).search, list_str_all_files))[0]
