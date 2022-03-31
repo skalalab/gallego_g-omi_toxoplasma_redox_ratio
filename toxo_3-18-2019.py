@@ -62,17 +62,19 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         bool_has_toxo = True
         handle_toxo = base_name + str(int(row_data.toxo)).zfill(3)
     
-    
-    # skip 
-    if  handle_nadh == 'Cells-007' or \
-        handle_nadh == 'Cells-030' or \
+    #skip masks with missing values 
+    # 3-18-2019
+    # mask_cell : 'Cells-007_photons _cells.tiff'
+    # mask_cell : 'Cells-030_photons _cells.tiff'
+    # mask_cell : 'Cells-070_photons _cells.tiff'
+    # mask_toxo : 'Cells-105_Cycle00001_Ch1_000001.ome_toxo.tiff'
+    # mak_cell: : 'Cells-133_photons _cells.tiff'
+    if  handle_nadh == 'Cells-007' or\
         handle_nadh == 'Cells-070' or \
-        handle_nadh == 'Cells-340' or \
-        handle_nadh == 'Cells-001' or \
         handle_toxo == 'Cells-105' or\
-        handle_nadh == 'Cells-133'  \
-            : 
-                
+        handle_nadh == 'Cells-133' or\
+        handle_nadh == 'Cells-030' \
+            :   
         print(f"skipping row nadh: {handle_nadh}")
         continue
     
@@ -116,7 +118,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["treatment"] = row_data.treatment
     dict_dataset[handle]["time_hours"] = row_data.Time.split(" ",1)[0]
     dict_dataset[handle]["experiment"] = str(row_data.experiment).split(" ", 1)[0]
-    # dict_dataset[handle]["set_name"] = str(row_data.experiment).split(" ", 1)[0]
+    
+    
     ########### plots for visualization
     # fig, ax = plt.subplots(3,5, figsize=(10,5))
     
@@ -188,9 +191,9 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 #%%
 
     
-    df_dataset = pd.DataFrame(dict_dataset).transpose()
-    df_dataset.index.name = "index"
-    df_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+df_dataset_output = pd.DataFrame(dict_dataset).transpose()
+df_dataset.index.name = "index"
+df_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
