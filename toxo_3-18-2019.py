@@ -52,7 +52,7 @@ base_name = "Cells-"
 dict_dataset = {}
 
 for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
-    # print(row_data)
+    print(row_data)
     
     # generate image handles 
     handle_nadh = base_name + str(int(row_data.nadh)).zfill(3)
@@ -192,8 +192,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     
 df_dataset_output = pd.DataFrame(dict_dataset).transpose()
-df_dataset.index.name = "index"
-df_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+df_dataset_output.index.name = "index"
+df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"

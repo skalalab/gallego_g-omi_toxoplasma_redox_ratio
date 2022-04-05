@@ -13,9 +13,13 @@ path_all_features = list(path_project.glob("*props.csv"))[0]
 
 df_data = pd.read_csv(path_all_features)
 
-df_plot_data = df_data[["redox_ratio_mean","nadh_a1_mean"]] 
+df_plot_data = df_data[["redox_ratio_mean","nadh_a1_mean"]] #[:1000] 
 
-clustermap = sns.clustermap(df_plot_data, cmap=cmc.batlow)
+clustermap = sns.clustermap(df_plot_data, 
+                            cmap=cmc.batlow,
+                            # standard_scale = 0,
+                            z_score=1,
+                            )
 
 
 #%%
