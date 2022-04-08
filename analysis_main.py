@@ -20,16 +20,16 @@ list_dataset_dicts = list(path_datasets.glob("*.csv"))
 #%% COMPUTE OMI PARAMETERS
 
 # iterate through dictionaries
-for dict_dataset in tqdm(list_dataset_dicts[1:2]):
+for dict_dataset in tqdm(list_dataset_dicts[:]):
     pass
     df_data = pd.read_csv(dict_dataset, index_col=("index"))
     
+    print(dict_dataset)
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]):#iterate through sets
         pass
         
-    
-        # visualize_dictionary(idx, row_data)
+        visualize_dictionary(idx, row_data)
         
         nadh_photons = load_image(row_data.nadh_photons)
         nadh_a1 = load_image(row_data.nadh_a1)
@@ -80,26 +80,25 @@ for dict_dataset in tqdm(list_dataset_dicts[1:2]):
             list_roi_values = np.unique(mask_cell_toxo_intersection) # roi values with toxo
             
             # visualize toxo
-            fig, ax = plt.subplots(1,5)
-            ax[0].imshow(mask_cell)
-            ax[0].set_title("cell masks")
-            ax[0].set_axis_off()
-            ax[1].imshow(mask_toxo > 0)
-            ax[1].set_title("toxo masks")
-            ax[1].set_axis_off()
-            ax[2].imshow(mask_cell_toxo_intersection)
-            ax[2].set_title("intersection")
-            ax[2].set_axis_off()
+            # fig, ax = plt.subplots(1,5)
+            # ax[0].imshow(mask_cell)
+            # ax[0].set_title("cell masks")
+            # ax[0].set_axis_off()
+            # ax[1].imshow(mask_toxo > 0)
+            # ax[1].set_title("toxo masks")
+            # ax[1].set_axis_off()
+            # ax[2].imshow(mask_cell_toxo_intersection)
+            # ax[2].set_title("intersection")
+            # ax[2].set_axis_off()
             
-            ax[3].imshow(load_image(row_data.toxo_photons), vmax=30)
-            ax[3].set_title("toxo photons")
-            ax[3].set_axis_off()
-            im_kmeans = kmeans_threshold(load_image(row_data.toxo_photons), k=2, n_brightest_clusters=1)
-            ax[4].imshow(im_kmeans, vmax=1)
-            ax[4].set_title("toxo kmeans ")
-            ax[4].set_axis_off()
-            plt.show()
-            
+            # ax[3].imshow(load_image(row_data.toxo_photons), vmax=30)
+            # ax[3].set_title("toxo photons")
+            # ax[3].set_axis_off()
+            # im_kmeans = kmeans_threshold(load_image(row_data.toxo_photons), k=2, n_brightest_clusters=1)
+            # ax[4].imshow(im_kmeans, vmax=1)
+            # ax[4].set_title("toxo kmeans ")
+            # ax[4].set_axis_off()
+            # plt.show()
             
             
             for key in omi_props: 

@@ -131,7 +131,11 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["time_hours"] = row_data.Time.split(" ",1)[0]
     dict_dataset[handle]["experiment"] = str(row_data.experiment).split(" ", 1)[0]
 
-
+    # add image numbers
+    dict_dataset[handle]["im_num_toxo"] = row_data.toxo
+    dict_dataset[handle]["im_num_nadh"] = row_data.nadh 
+    dict_dataset[handle]["im_num_fad"] = row_data.fad
+    
     ########### plots for visualization
     # fig, ax = plt.subplots(3,5, figsize=(10,5))
     

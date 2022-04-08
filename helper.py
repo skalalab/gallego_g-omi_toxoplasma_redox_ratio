@@ -24,7 +24,9 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
     ########## plots for visualization
     
     bool_has_toxo = False
-    if "mask_toxo" in dict_set and not math.isnan(dict_set["mask_toxo"]):
+    if 'mask_toxo' in dict_set and \
+        isinstance(dict_set.mask_toxo, str) and \
+            Path(dict_set.mask_toxo).exists():
         bool_has_toxo = True
 
 
@@ -81,8 +83,9 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
     
     
     if bool_has_toxo: 
-        ax[2,1].set_title("mCherry / toxo")
-        ax[2,1].imshow(load_image(dict_set["toxo_photons"]))
+        if "toxo_photons" in dict_set:
+            ax[2,1].set_title("mCherry / toxo")
+            ax[2,1].imshow(load_image(dict_set["toxo_photons"]))
         
         ax[2,2].imshow(load_image(dict_set["mask_toxo"]))
         ax[2,2].set_title("mask toxo")

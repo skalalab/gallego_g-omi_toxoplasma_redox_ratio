@@ -52,7 +52,7 @@ base_name = "Cells-"
 dict_dataset = {}
 
 for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
-    print(row_data)
+    # print(row_data)
     
     # generate image handles 
     handle_nadh = base_name + str(int(row_data.nadh)).zfill(3)
@@ -108,17 +108,22 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["fad_t1"] = list(filter(re.compile(handle_fad +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t2"] = list(filter(re.compile(handle_fad +  suffixes['t2']).search, list_str_all_files))[0]
     
-
     # paths to toxo
     if bool_has_toxo:
         dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
         dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(handle_toxo + suffixes['mask_toxo']).search, list_str_all_files))[0]
-    
+
+        
     # additional information
     dict_dataset[handle]["treatment"] = row_data.treatment
     dict_dataset[handle]["time_hours"] = row_data.Time.split(" ",1)[0]
     dict_dataset[handle]["experiment"] = str(row_data.experiment).split(" ", 1)[0]
     
+    
+    # add image numbers
+    dict_dataset[handle]["im_num_toxo"] = row_data.toxo
+    dict_dataset[handle]["im_num_nadh"] = row_data.nadh 
+    dict_dataset[handle]["im_num_fad"] = row_data.fad
     
     ########### plots for visualization
     # fig, ax = plt.subplots(3,5, figsize=(10,5))

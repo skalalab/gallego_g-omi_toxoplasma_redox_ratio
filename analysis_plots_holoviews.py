@@ -10,13 +10,10 @@ import numpy as np
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 
 path_all_features = list(path_project.glob("*props.csv"))[0] 
-#%% PLOT REDOX RATIO BY EXPERIMENT, TREATMENT, HOURS 
-
 df_data = pd.read_csv(path_all_features)
-# assemble 
-
 path_output_figures = path_project / "figures"
 
+#%% PLOT ALL REDOX RATIO BY EXPERIMENT, TREATMENT, HOURS 
 
 kdims = [
         ("experiment", "Experiment"),
@@ -24,14 +21,13 @@ kdims = [
         ("time_hours","Time (hrs)")
         ]
 
-vdims = [("redox_ratio_mean","Redox Ratio Mean")]
-
+vdims = [("redox_ratio_norm_mean","Redox Ratio Mean")]
 
 bw_experiment_treatment_time = hv.BoxWhisker(df_data, vdims=vdims, kdims=kdims)
 
-
+list_experiments = " | ".join(np.unique(df_data.experiment))
 bw_experiment_treatment_time.opts(
-    title=f"Redox Ratio | NAD(P)H/FAD \n All Data",
+    title=f"Redox Ratio | NAD(P)H/(NAD(P)H + FAD) \n Experiments: {list_experiments}",
     width=1600,
     height=800,
     tools=["hover"],
@@ -39,7 +35,6 @@ bw_experiment_treatment_time.opts(
     )
 
 hv.save(bw_experiment_treatment_time, path_output_figures / f"boxwhisker_experiment_treatment_time.html")
-
 #%% PLOT REDOX RATIO BY EXPERIMENT 
 
 for experiment in np.unique(df_data["experiment"]):
@@ -55,13 +50,13 @@ for experiment in np.unique(df_data["experiment"]):
             ("image_set","Image Set")
             ]
     
-    vdims = [("redox_ratio_mean","Redox Ratio Mean")]
+    vdims = [("redox_ratio_norm_mean","Redox Ratio Mean")]
     
     
-    bw_treatment_time_image = hv.BoxWhisker(df_data, vdims=vdims, kdims=kdims)
+    bw_treatment_time_image = hv.BoxWhisker(df_props_exp, vdims=vdims, kdims=kdims)
     
     bw_treatment_time_image.opts(
-        title=f"Redox Ratio \nExperiment: {experiment}",
+        title=f"Redox Ratio | NAD(P)H/(NAD(P)H + FAD)  \nExperiment: {experiment}",
         width = 2000,
         height = 800,
         tools=["hover"],
@@ -70,9 +65,7 @@ for experiment in np.unique(df_data["experiment"]):
     
     hv.save(bw_treatment_time_image, path_output_figures / f"{experiment}_by_images.html")
     
-
 #%% PLOT MEDIA  AND MEDIA+TOXO
-
 
 df_media_media_toxo = df_data[df_data["treatment"].isin(["media", "media+toxo"])]
 
@@ -82,30 +75,21 @@ kdims = [
 
     ]
 
-vdims = [("redox_ratio_mean","Redox Ratio")] 
-bars_media_toxo = hv.Bars(df_media_media_toxo, kdims=kdims, vdims=vdims)
+vdims = [("redox_ratio_norm_mean","Redox Ratio")] 
 boxwhisker_media_toxo = hv.BoxWhisker(df_media_media_toxo, kdims=kdims, vdims=vdims)
 
-
-bars_media_toxo.opts(
-    width=1600,
-    height=800,
-    tools=["hover"],
-    title="Redox Ratio \nAll Data"
-    
-    )
-
+str_experiments = ' |'.join(np.unique(df_media_media_toxo.experiment))
 boxwhisker_media_toxo.opts(
     width=1600,
     height=800,
     tools=["hover"],
-    title="Redox Ratio \nAll Data"
-    
+    title=f"Redox Ratio \nExperiments: {str_experiments}",
+    box_color="treatment",
+    # cmap='Category20',
+    cmap=[ '#E90000','#1690FF'],
     )
 
-hv.save(bars_media_toxo, path_output_figures / f"bars_media_media_toxo.html")
 hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_media_media_toxo.html")
-
 
 #%% MEDIA AND MEDIA+TOXO NORMALIZED TO MEDIA/CONTROL
 
@@ -115,8 +99,8 @@ df_media_media_toxo = df_data[df_data["treatment"].isin(["media", "media+toxo"])
 list_timepoints_hrs = np.unique(df_data["time_hours"])
 
 # redox ratio means across timepoints for control/media condition
-dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[(df_media_media_toxo["time_hours"]== timepoint_hrs) & \
-                                                            (df_media_media_toxo["treatment"] == "media")]["redox_ratio_mean"]) \
+dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[(df_media_media_toxo["time_hours"] == timepoint_hrs) & \
+                                                            (df_media_media_toxo["treatment"] == "media")]["redox_ratio_norm_mean"]) \
                                                             for timepoint_hrs in list_timepoints_hrs  }
 
 # df_media_media_toxo["redox_ratio_normalized"] = np.NaN
@@ -129,7 +113,7 @@ dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[(df_media_media_t
 
 for idx, row_data in df_media_media_toxo.iterrows():
     pass
-    df_media_media_toxo.loc[idx,"redox_ratio_normalized"] = row_data.loc[("redox_ratio_mean")] - dict_means[row_data.time_hours]
+    df_media_media_toxo.loc[idx,"redox_ratio_normalized"] = row_data.loc[("redox_ratio_norm_mean")] - dict_means[row_data.time_hours]
 
 kdims = [
         ("time_hours","Timepoint"),
@@ -138,17 +122,7 @@ kdims = [
     ]
 
 vdims = [("redox_ratio_normalized","Redox Ratio")] 
-bars_media_toxo = hv.Bars(df_media_media_toxo, kdims=kdims, vdims=vdims)
 boxwhisker_media_toxo = hv.BoxWhisker(df_media_media_toxo, kdims=kdims, vdims=vdims)
-
-
-bars_media_toxo.opts(
-    width=1600,
-    height=800,
-    tools=["hover"],
-    title="Redox Ratio \nAll Data"
-    
-    )
 
 boxwhisker_media_toxo.opts(
     width=1600,
@@ -158,17 +132,7 @@ boxwhisker_media_toxo.opts(
     
     )
 
-hv.save(bars_media_toxo, path_output_figures / f"bars_normalized_media_media_toxo.html")
 hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_normalized_media_media_toxo.html")
-
-
-
-
-
-
-
-
-
 
 
 
