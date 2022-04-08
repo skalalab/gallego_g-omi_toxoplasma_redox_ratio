@@ -28,8 +28,13 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]):#iterate through sets
         pass
+    
+        # if idx != '3_18_2019_idx_118' :# "3_18_2019_idx_111" or :
+        #     continue
+        # else:
+        #     print("check set")
         
-        visualize_dictionary(idx, row_data)
+        # visualize_dictionary(idx, row_data)
         
         nadh_photons = load_image(row_data.nadh_photons)
         nadh_a1 = load_image(row_data.nadh_a1)
@@ -61,8 +66,66 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                      im_fad_t2 = fad_t2,
                                      other_props = ["area",
                                                     "perimeter",
-                                                    "eccentricity"
-                                                    ])
+                                                    "eccentricity",
+                                                    "centroid",
+                                                    "perimeter"
+                                                    ]) 
+        
+        
+        # look for extreme outliers
+        # show image with outliers 
+        outliers_found = False
+        for r in omi_props:
+            pass
+            if omi_props[r]["nadh_t2_mean"] > 3500:
+                outliers_found = True
+                
+        if outliers_found:
+            for param in [
+                    "redox_ratio_mean", \
+                    "nadh_t2_mean"
+                    ]:
+            # param = "redox_ratio_mean"
+                plt.title(f"{idx} \n{param}")
+                plt.imshow(mask_cell)
+                for key in omi_props:
+                    text = f"{omi_props[key][param]:.3f}"
+                    plt.text(omi_props[key]["centroid"][1],
+                              omi_props[key]["centroid"][0],
+                              text,
+                              fontsize=7,
+                              c="w")
+                    plt.plot(omi_props[key]["centroid"][1],
+                              omi_props[key]["centroid"][0],
+                              marker='o',
+                              markersize=3,
+                              c="w")
+                plt.show()
+            
+        # import matplotlib.patches as mpatches
+        # label_image = mask_cell
+        # param = "label"
+        # fig, ax = plt.subplots()
+        # ax.set_title(param)
+        # ax.imshow(label_image)
+        # for region in omi_props:
+        #     pass
+        #     text = f"{region[param]}"
+        #     ax.text(region["centroid"][1],
+        #              region["centroid"][0],
+        #              text,
+        #              c="w")
+        #     ax.plot(region["centroid"][1],
+        #              region["centroid"][0],
+        #              marker='o',
+        #              markersize=5,
+        #              c="w")
+            
+        #     minr, minc, maxr, maxc = region.bbox
+        #     rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
+        #                       fill=False, edgecolor='red', linewidth=2)
+        #     ax.add_patch(rect)
+        # plt.show()
         
         
         ## initialize column of toxo pixels

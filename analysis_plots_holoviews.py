@@ -86,7 +86,7 @@ boxwhisker_media_toxo.opts(
     title=f"Redox Ratio \nExperiments: {str_experiments}",
     box_color="treatment",
     # cmap='Category20',
-    cmap=[ '#E90000','#1690FF'],
+    cmap=[ '#FC5353','#1690FF'],
     )
 
 hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_media_media_toxo.html")

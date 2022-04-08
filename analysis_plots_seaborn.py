@@ -43,8 +43,6 @@ df_plot_data = df_data[[
 
 # fad_321_t2 = read_asc(r"Z:/0-Projects and Experiments/GG - toxo_omi_redox_ratio/4-6-2019/040619_Katie_SPC/Cells-322_t2.asc")
 
-v = df_data[df_data["fad_t2_mean"] > 197895]
-
 # b = sns.pairplot(df_plot_data[:100])
 # b.savefig("clustermap.jpeg")
 
@@ -63,10 +61,10 @@ row_colors = pd.concat([row_colors_time_hours,row_colors_treatment],axis=1)
 
 clustermap = sns.clustermap(df_plot_data, 
                             # cmap=cmc.batlow,
-                            z_score=1,
+                            z_score=0,
                             # standard_scale=1,
                             row_colors = row_colors,
-                            row_cluster=False
+                            row_cluster=True
                             )
 
 # add legends
