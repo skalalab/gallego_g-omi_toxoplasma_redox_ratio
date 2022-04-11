@@ -12,7 +12,7 @@ import pathlib
 import numpy as np
 import math
 
-from helper import load_image
+from helper import load_image, visualize_dictionary
 
 path_experiment = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_dataset = path_experiment / "3-18-2019" / "03182019_Katie"
@@ -69,7 +69,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # mask_cell : 'Cells-070_photons _cells.tiff'
     # mask_toxo : 'Cells-105_Cycle00001_Ch1_000001.ome_toxo.tiff'
     # mak_cell: : 'Cells-133_photons _cells.tiff'
-    if  handle_nadh == 'Cells-007' or\
+    if  handle_nadh == 'Cells-007' or \
+        handle_nadh == 'Cells-005' or \
         handle_nadh == 'Cells-070' or \
         handle_toxo == 'Cells-105' or\
         handle_nadh == 'Cells-133' or\
@@ -92,6 +93,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["nadh_a2"] = list(filter(re.compile(handle_nadh +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["nadh_t1"] = list(filter(re.compile(handle_nadh +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["nadh_t2"] = list(filter(re.compile(handle_nadh +  suffixes['t2']).search, list_str_all_files))[0]
+    dict_dataset[handle]["nadh_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
 
     # MASKS
     path_mask_cell = list(filter(re.compile(handle_nadh +  suffixes['mask_cell']).search, list_str_all_files))[0]
@@ -107,6 +109,9 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["fad_a2"] = list(filter(re.compile(handle_fad +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t1"] = list(filter(re.compile(handle_fad +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t2"] = list(filter(re.compile(handle_fad +  suffixes['t2']).search, list_str_all_files))[0]
+    dict_dataset[handle]["fad_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
+
+    
     
     # paths to toxo
     if bool_has_toxo:
@@ -199,6 +204,11 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 df_dataset_output = pd.DataFrame(dict_dataset).transpose()
 df_dataset_output.index.name = "index"
 df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+
+#%%
+for row_data in dict_dataset:
+    pass
+    # visualize_dictionary("toxo 3-18-2019",dict_dataset[row_data])
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"

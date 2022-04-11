@@ -10,6 +10,7 @@ from datetime import date
 import math
 import numpy as np
 from flim_tools.image_processing import kmeans_threshold
+from natsort import natsorted
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_datasets = path_project / "dictionaries"
@@ -41,15 +42,16 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         nadh_a2 = load_image(row_data.nadh_a2)
         nadh_t1 = load_image(row_data.nadh_t1)
         nadh_t2 = load_image(row_data.nadh_t2)
+        nadh_chi = load_image(row_data.nadh_chi)
         
         fad_photons = load_image(row_data.fad_photons)
         fad_a1 = load_image(row_data.fad_a1)
         fad_a2 = load_image(row_data.fad_a2)
         fad_t1 = load_image(row_data.fad_t1)
         fad_t2 = load_image(row_data.fad_t2)
+        fad_chi = load_image(row_data.fad_chi)
         
         mask_cell = load_image(row_data.mask_cell)
-        
         
         omi_props = regionprops_omi(idx, 
                                      label_image = mask_cell, 
@@ -64,6 +66,10 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                      im_fad_a2 = fad_a2,
                                      im_fad_t1 = fad_t1, 
                                      im_fad_t2 = fad_t2,
+                                     # optional chi paramters
+                                     im_nadh_chi=nadh_chi,
+                                     im_fad_chi=fad_chi,
+                                     
                                      other_props = ["area",
                                                     "perimeter",
                                                     "eccentricity",
@@ -72,8 +78,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                                     ]) 
         
         
-        # look for extreme outliers
-        # show image with outliers 
+        
+        # look for extreme outliers, show image with outliers 
         outliers_found = False
         for r in omi_props:
             pass
@@ -101,7 +107,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                               markersize=3,
                               c="w")
                 plt.show()
-            
+        
+        
+        # quality control for rois  
+        # chi square mean above 1.5 should be looked at
+        
+        
+        
+        # look for ROIs with 
         # import matplotlib.patches as mpatches
         # label_image = mask_cell
         # param = "label"
@@ -216,3 +229,66 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     path_feature_summaries = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
     d = date.today().strftime("%Y_%m_%d")
     df_all_props.to_csv(path_feature_summaries / f"{d}_all_props.csv")
+    
+#%%
+
+# plot all nadh chi
+
+plt.hist(df_all_props['nadh_chi_mean'], bins=100)
+plt.title("nadh_chi_mean")
+plt.show()
+
+df_outliers = df_all_props[df_all_props['nadh_chi_median'] > 1.5]
+set_paths_nadh_chi_files = natsorted(set(df_outliers["nadh_chi"]))
+
+#%%
+from ast import literal_eval
+for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
+    pass
+    
+    df_subset = df_outliers[df_outliers["nadh_chi"] == path_im_chi_outlier]
+    df_subset = df_subset.reset_index(drop=True)
+    fig, ax = plt.subplots(1,4, figsize=(10,3))
+    
+    fig.suptitle(f"{df_subset.base_name_with_roi[0].rsplit('_',1)[0]}")
+    ax[0].imshow(load_image(df_subset.nadh_photons[0]))
+    ax[0].set_title('nadh photons')
+    ax[0].set_axis_off()
+    
+    im_chi = load_image(df_subset.nadh_chi[0])
+    ax[1].imshow(im_chi, vmax=1.5)
+    ax[1].set_title('nadh chi')
+    ax[1].set_axis_off()
+    
+    mask = load_image(df_subset.mask_cell[0])
+    ax[2].imshow( (mask > 0) * im_chi, )#vmax=1.5
+    ax[2].set_title('nadh chi masked')
+    ax[2].set_axis_off()
+    
+    ax[3].imshow(mask)
+    ax[3].set_title('mask')
+    ax[3].set_axis_off()
+    
+    for idx, outlier_row in df_subset.iterrows():
+        pass
+        text = f"{outlier_row.nadh_chi_mean:.2f}"
+        text = f"{outlier_row.mask_label}"
+        if outlier_row.mask_label == 71:
+            print("roi 71")
+        centroid = literal_eval(outlier_row["centroid"])
+        ax[2].text(centroid[1],
+                 centroid[0],
+                 text,
+                 c="w",
+                 fontsize=6)
+        ax[2].plot(centroid[1],
+                     centroid[0],
+                     marker='o',
+                     markersize=1,
+                     c="w")
+    plt.show()
+    
+
+
+    
+    

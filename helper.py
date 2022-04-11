@@ -25,8 +25,8 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
     
     bool_has_toxo = False
     if 'mask_toxo' in dict_set and \
-        isinstance(dict_set.mask_toxo, str) and \
-            Path(dict_set.mask_toxo).exists():
+        isinstance(dict_set['mask_toxo'], str) and \
+            Path(dict_set['mask_toxo']).exists():
         bool_has_toxo = True
 
 

@@ -61,7 +61,7 @@ row_colors = pd.concat([row_colors_time_hours,row_colors_treatment],axis=1)
 
 clustermap = sns.clustermap(df_plot_data, 
                             # cmap=cmc.batlow,
-                            z_score=0,
+                            z_score=1,
                             # standard_scale=1,
                             row_colors = row_colors,
                             row_cluster=True
