@@ -135,5 +135,24 @@ boxwhisker_media_toxo.opts(
 hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_normalized_media_media_toxo.html")
 
 
+#%% UMAP
+
+
+list_omi_parameters = [
+    'nadh_intensity_mean',
+    'nadh_a1_mean',  
+    'nadh_a2_mean',
+    'nadh_t1_mean',  
+    'nadh_t2_mean',
+    'nadh_tau_mean_mean', 
+    'fad_intensity_mean',  
+    'fad_a1_mean',
+    'fad_a2_mean',  
+    'fad_t1_mean',
+    'fad_t2_mean',  
+    'fad_tau_mean_mean',
+    'redox_ratio_mean'
+    ]
+
 
 

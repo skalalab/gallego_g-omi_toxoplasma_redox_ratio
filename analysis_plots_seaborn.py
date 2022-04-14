@@ -90,21 +90,21 @@ for key in df_plot_data:
     plt.show()
 
 #%%
-import seaborn as sns; sns.set_theme(color_codes=True)
-iris = sns.load_dataset("iris")
-species = iris.pop("species")
-g = sns.clustermap(iris)
+# import seaborn as sns; sns.set_theme(color_codes=True)
+# iris = sns.load_dataset("iris")
+# species = iris.pop("species")
+# g = sns.clustermap(iris)
 
-lut = dict(zip(species.unique(), "rbg"))
-row_colors = species.map(lut)
-g = sns.clustermap(iris, row_colors=row_colors)
+# lut = dict(zip(species.unique(), "rbg"))
+# row_colors = species.map(lut)
+# g = sns.clustermap(iris, row_colors=row_colors)
 
 #%%
 
-import seaborn as sns; sns.set_theme(color_codes=True)
-iris = sns.load_dataset("iris")
-species = iris.pop("species")
-g = sns.clustermap(iris)
+# import seaborn as sns; sns.set_theme(color_codes=True)
+# iris = sns.load_dataset("iris")
+# species = iris.pop("species")
+# g = sns.clustermap(iris)
 
 # plt.plot(g)
 # plt.show()

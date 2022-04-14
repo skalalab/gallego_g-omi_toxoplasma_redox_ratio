@@ -234,6 +234,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
 
 # plot all nadh chi
 
+df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_04_11_all_props.csv")
+
 plt.hist(df_all_props['nadh_chi_mean'], bins=100)
 plt.title("nadh_chi_mean")
 plt.show()
@@ -272,7 +274,7 @@ for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
     for idx, outlier_row in df_subset.iterrows():
         pass
         text = f"{outlier_row.nadh_chi_mean:.2f}"
-        text = f"{outlier_row.mask_label}"
+        # text = f"{outlier_row.mask_label}"
         if outlier_row.mask_label == 71:
             print("roi 71")
         centroid = literal_eval(outlier_row["centroid"])
