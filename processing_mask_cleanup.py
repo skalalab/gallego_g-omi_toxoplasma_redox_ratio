@@ -7,15 +7,10 @@ import matplotlib.pylab as plt
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
 
-import numpy as np
-import matplotlib.pyplot as plt
-from cellpose import models
-from cellpose.io import imread
-
+from tqdm import tqdm
 from helper import load_image
 
-from sklearn.cluster import KMeans
-
+import scipy.ndimage as ndi
 
 from skimage.filters import median
 from helper import visualize_dictionary
@@ -24,134 +19,108 @@ from helper import visualize_dictionary
 path_dict_dataset = r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries\04-19-2019-keys.csv"
 
 df_dataset = pd.read_csv(path_dict_dataset)
-
+path_output = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\masks_whole_cell")
 #%%
-for index_name, row_data in df_dataset.iterrows():
+for index_name, row_data in tqdm(list(df_dataset.iterrows())[:]):
     pass
     im = tifffile.imread(row_data.mask_cell)
     # plt.imshow(im)
     # np.unique(im)
 
-#%%
+    # for row_data in dict_dataset:
+    
+    # visualize_dictionary(index_name, row_data)
 
+    mask = load_image(row_data['mask_cell'])
+    # plt.imshow(b)
+    # m1 = median(b)
+    # plt.imshow(m1)
+    # np.unique(m1)
+    # m2 = median(m1)
+    # plt.imshow(m2)
+    # plt.show()
+    
+    from skimage import filters
+    from skimage.feature import canny
+    from skimage.morphology import (disk, 
+                                    dilation, 
+                                    skeletonize, 
+                                    binary_opening,
+                                    remove_small_objects)
+    
+   
+    binary_mask = np.array(mask > 0, dtype=np.uint8)
+    # plt.imshow(binary_mask)
 
-
-# for row_data in dict_dataset:
+  
+    ### isolate good binary mask
+    f1 = binary_opening(binary_mask, disk(1))
+    # plt.imshow(f1)
+    f2 = remove_small_objects(f1)
+    # plt.imshow(f2)
     
-    visualize_dictionary(index_name, row_data)
-
-    b = load_image(row_data['mask_cell'])
-    plt.imshow(b)
-    m1 = median(b)
-    plt.imshow(m1)
-    np.unique(m1)
-    m2 = median(m1)
-    plt.imshow(m2)
-    plt.show()
+    ## get good edges to separate boundaries
+    f3 = canny(mask)
+    # plt.imshow(f3)
+    f4 = dilation(f3, disk(1) )
+    # plt.imshow(f4)
+    f5 = skeletonize(f4)
+    # plt.imshow(f5)
     
-    # https://stackoverflow.com/questions/48222977/python-converting-an-image-to-use-less-colors
-    from sklearn.cluster import KMeans
+    # combine
+    f6 = f2 * np.invert(f5)
+    # plt.imshow(f6)
+    f7 = remove_small_objects(f6)
+    # plt.imshow(f7)
     
-    # arr = original.reshape((-1, 3))
-    arr = m2
-    # n_colors = 12
-    # kmeans = KMeans(n_clusters=n_colors, random_state=42).fit(arr)
-    # labels = kmeans.labels_
-    # centers = kmeans.cluster_centers_
-    # plt.hist(m2, bins=255)
-    # less_colors = centers[labels].reshape(arr.shape).astype('uint8')
+    new_mask, _ = ndi.label(np.array(f7, dtype=np.uint16))
+    # plt.imshow(new_mask)
+    # plt.imshow(filters.sobel(mask))
     
-    counts, bin_edges = np.histogram(m2,bins=255)
-    
-    threshold = 400 # pixels
-    
-    binary_mask 
-    
-    plt.imshow(less_colors)
-#%% Cellpose segmentation
 
     
-    # model_type='cyto' or 'nuclei' or 'cyto2'
-    model = models.Cellpose(model_type='cyto2')
+    fig, ax = plt.subplots(1,4, figsize=(10,5))
     
-    # list of files
-    # PUT PATH TO YOUR FILES HERE!
-    # files = ['/media/carsen/DATA1/TIFFS/onechan.tif']
+    filename_mask = Path(row_data['mask_cell']).stem
+    fig.suptitle(filename_mask)
     
-    # imgs = [imread(f) for f in files]
-    # nimg = len(imgs)
+    ax[0].imshow(load_image(row_data['nadh_photons']))
+    ax[0].set_title(f"nadh")
+    ax[0].set_axis_off()
     
-    imgs = [m2]
-    nimg = len(imgs)
+    ax[1].imshow(mask)
+    ax[1].set_title(f"original")
+    ax[1].set_axis_off()
     
-    # define CHANNELS to run segementation on
-    # grayscale=0, R=1, G=2, B=3
-    # channels = [cytoplasm, nucleus]
-    # if NUCLEUS channel does not exist, set the second channel to 0
-    channels = [0,0]
-    # IF ALL YOUR IMAGES ARE THE SAME TYPE, you can give a list with 2 elements
-    # channels = [0,0] # IF YOU HAVE GRAYSCALE
-    # channels = [2,3] # IF YOU HAVE G=cytoplasm and B=nucleus
-    # channels = [2,1] # IF YOU HAVE G=cytoplasm and R=nucleus
+    fig.suptitle(Path(row_data['mask_cell']).stem)
+    ax[2].imshow(mask > 0)
+    ax[2].set_title(f"original binary")
+    ax[2].set_axis_off()
     
-    # if diameter is set to None, the size of the cells is estimated on a per image basis
-    # you can set the average cell `diameter` in pixels yourself (recommended)
-    # diameter can be a list or a single number for all images
+    ax[3].imshow(new_mask)
+    ax[3].set_title("new mask")
+    ax[3].set_axis_off()
+    plt.savefig(path_output / f"{filename_mask}_grid.png")
+    plt.close()
+    # plt.show()
     
-    masks, flows, styles, diams = model.eval(imgs, 
-                                             diameter=30, 
-                                             flow_threshold=0.4,
-                                             cellprob_threshold=0.0,
-                                             channels=channels)
-    
-    fig, ax = plt.subplots(1,2, figsize=(10,5))
-    ax[0].imshow(masks[0])
+    # save images 
+    tifffile.imwrite(path_output / f"{filename_mask}.tiff", new_mask)
     
     #%%
     
-# from scipy import ndimage as ndi
+# from skimage import feature
+# img = mask
+# edges_canny = feature.canny(img) # Canny
+# plt.imshow(edges_canny)
+# edges_sobel = filters.sobel(img) # Sobel
+# plt.imshow(edges_sobel)
+# edges_laplace = filters.laplace(img) # Laplacian
+# plt.imshow(edges_laplace)
+# edges_scharr = filters.scharr(img) # Scharr
+# plt.imshow(edges_scharr)
+# edges_prewitt = filters.prewitt(img) # Prewitt
+# plt.imshow(edges_prewitt)
+# edges_roberts = filters.roberts(img) # Roberts
+# plt.imshow(edges_roberts)
 
-# from skimage.segmentation import watershed
-# from skimage.feature import peak_local_max
-
-# distance = ndi.distance_transform_edt(m2)
-# coords = peak_local_max(distance, footprint=np.ones((3, 3)), labels=m2)
-# mask = np.zeros(distance.shape, dtype=bool)
-# mask[tuple(coords.T)] = True
-# markers, _ = ndi.label(mask)
-# labels = watershed(-distance, markers, mask=m2)
-
-#%%
-
-
-from PIL import Image, ImageFilter
-  
-  
-# Opening the image (R prefixed to string
-# in order to deal with '\' in paths)
-# image = Image.open(r"Sample.png")
-  
-# Converting the image to grayscale, as edge detection 
-# requires input image to be of mode = Grayscale (L)
-# image = image.convert("L")
-  
-# Detecting Edges on the Image using the argument ImageFilter.FIND_EDGES
-image = Image.fromarray(m2)
-image = image.filter(ImageFilter.FIND_EDGES)
-  
-plt.imshow(np.array(image)>0)
-# Saving the Image Under the name Edge_Sample.png
-image.save(r"Edge_Sample.png")
-
-
-#%%
-
-import cv2 
-import numpy as np 
-import matplotlib.pyplot as plt
-
-def simple_edge_detection(image): 
-   edges_detected = cv2.Canny(np.array(image), 100, 200) 
-   images = [image , edges_detected]
-   
-simple_edge_detection(image)
