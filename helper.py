@@ -85,7 +85,7 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
     if bool_has_toxo: 
         if "toxo_photons" in dict_set:
             ax[2,1].set_title("mCherry / toxo")
-            ax[2,1].imshow(load_image(dict_set["toxo_photons"]))
+            ax[2,1].imshow(load_image(dict_set["toxo_photons"]), vmax=30)
         
         ax[2,2].imshow(load_image(dict_set["mask_toxo"]))
         ax[2,2].set_title("mask toxo")

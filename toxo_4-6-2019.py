@@ -209,6 +209,8 @@ df_output_dataset = pd.DataFrame(dict_dataset).transpose()
 df_output_dataset.index.name = "index"
 df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
+
+        
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"

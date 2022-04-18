@@ -208,7 +208,7 @@ df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 #%%
 for row_data in dict_dataset:
     pass
-    # visualize_dictionary("toxo 3-18-2019",dict_dataset[row_data])
+    visualize_dictionary(row_data,dict_dataset[row_data])
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
