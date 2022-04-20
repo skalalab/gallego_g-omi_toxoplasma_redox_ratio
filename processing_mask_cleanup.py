@@ -19,7 +19,7 @@ from helper import visualize_dictionary
 path_dict_dataset = r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries\04-19-2019-keys.csv"
 
 df_dataset = pd.read_csv(path_dict_dataset)
-path_output = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\masks_whole_cell")
+# path_output = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\masks_whole_cell")
 #%%
 for index_name, row_data in tqdm(list(df_dataset.iterrows())[:]):
     pass
@@ -105,7 +105,7 @@ for index_name, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # plt.show()
     
     # save images 
-    tifffile.imwrite(path_output / f"{filename_mask}.tiff", new_mask)
+    # tifffile.imwrite(path_output / f"{filename_mask}.tiff", new_mask)
     
     #%%
     
