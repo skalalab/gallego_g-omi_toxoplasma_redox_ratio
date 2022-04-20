@@ -8,6 +8,8 @@ import matplotlib as mpl
 mpl.rcParams["figure.dpi"]=300
 from pathlib import Path
 import pandas as pd
+
+from sklearn import preprocessing
 #%%
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
@@ -20,7 +22,6 @@ df_data = pd.read_csv(path_all_features)
 #%%
 df_plot_data = df_data[[
                         # nadh
-                        'nadh_intensity_mean',
                         'nadh_a1_mean', 
                         'nadh_a2_mean', 
                         'nadh_t1_mean', 
@@ -28,25 +29,20 @@ df_plot_data = df_data[[
                         'nadh_tau_mean_mean',
                         
                         # fad
-                        'fad_intensity_mean',
                         'fad_a1_mean',
                         'fad_a2_mean', 
                         'fad_t1_mean',
                         'fad_t2_mean',
                         'fad_tau_mean_mean',
-                        
-                        # rr
-                        "redox_ratio_mean",
                         ]]
 
 
+## scale data
+scaler_robust = preprocessing.RobustScaler()
+data = scaler_robust.fit_transform(df_plot_data)
+                    
+df_plot_data_scaled = pd.DataFrame(data, columns=df_plot_data.keys())                         
 
-# fad_321_t2 = read_asc(r"Z:/0-Projects and Experiments/GG - toxo_omi_redox_ratio/4-6-2019/040619_Katie_SPC/Cells-322_t2.asc")
-
-# b = sns.pairplot(df_plot_data[:100])
-# b.savefig("clustermap.jpeg")
-
-df_plot_data = df_plot_data[:]
 
 list_time_hours_colors = [list(np.random.choice(range(256), size=3)/256) for n in range(len(np.unique(df_data["time_hours"])))]
 lut1 = dict(zip(np.unique(df_data["time_hours"]), list_time_hours_colors))
@@ -59,7 +55,7 @@ row_colors_treatment = df_data["treatment"].map(lut2)
 
 row_colors = pd.concat([row_colors_time_hours,row_colors_treatment],axis=1)
 
-clustermap = sns.clustermap(df_plot_data, 
+clustermap = sns.clustermap(df_plot_data, # df_plot_data_scaled 
                             # cmap=cmc.batlow,
                             z_score=1,
                             # standard_scale=1,
@@ -88,23 +84,3 @@ for key in df_plot_data:
     # plt.plot(df_plot_data[key], 'o', markersize=2)
     plt.hist(df_plot_data[key], bins=100)
     plt.show()
-
-#%%
-# import seaborn as sns; sns.set_theme(color_codes=True)
-# iris = sns.load_dataset("iris")
-# species = iris.pop("species")
-# g = sns.clustermap(iris)
-
-# lut = dict(zip(species.unique(), "rbg"))
-# row_colors = species.map(lut)
-# g = sns.clustermap(iris, row_colors=row_colors)
-
-#%%
-
-# import seaborn as sns; sns.set_theme(color_codes=True)
-# iris = sns.load_dataset("iris")
-# species = iris.pop("species")
-# g = sns.clustermap(iris)
-
-# plt.plot(g)
-# plt.show()
