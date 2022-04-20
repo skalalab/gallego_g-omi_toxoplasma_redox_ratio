@@ -12,6 +12,7 @@ import pathlib
 import numpy as np
 import math
 
+from helper import load_image, visualize_dictionary
 
 from helper import load_image
 
@@ -26,14 +27,12 @@ list_str_all_files = list(map(str,list_all_files))
 df_dataset = pd.read_excel(path_excel)
 print(df_dataset.head())
 
-
-
 #%%    
 
 suffixes = {
     # 'im_photons': '_photons .tif',
     'im_photons': '_Cycle00001_Ch2_000001.ome.tif',
-    'im_toxo': '_photons .tif',
+    'im_toxo': '_Cycle00001_Ch1_000001.ome.tif',
     'mask_cell': '_photons _cells.tif',
     # 'mask_cytoplasm': '_photons_cyto.tiff',
     'mask_toxo': '_Cycle00001_Ch1_000001.ome_toxo.tiff', 
@@ -111,7 +110,6 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
     dict_dataset[handle]["mask_cell"] = path_mask_cell
 
-    
     # paths to fad 
     # paths to images
     dict_dataset[handle]["fad_photons"] = list(filter(re.compile(handle_fad + suffixes['im_photons'].replace("Ch2", "Ch1")).search, list_str_all_files))[0]
@@ -123,7 +121,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # paths to toxo
     if bool_has_toxo:
-        # dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
+        dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
         dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(handle_toxo + suffixes['mask_toxo']).search, list_str_all_files))[0]
     
     # additional information
@@ -209,7 +207,10 @@ df_output_dataset = pd.DataFrame(dict_dataset).transpose()
 df_output_dataset.index.name = "index"
 df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
-
+#%%
+for row_data in list(dict_dataset)[:2]:
+    pass
+    visualize_dictionary(row_data,dict_dataset[row_data])
         
     # 
     # #paths to toxo masks

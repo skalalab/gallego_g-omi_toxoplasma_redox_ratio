@@ -72,7 +72,6 @@ for timepoint in np.unique(df_data["time_hours"]):
     df_data_subset = df_data[df_data['time_hours']==timepoint]
     df_plot_data = df_data_subset[[
                             # nadh
-                            'nadh_intensity_mean',
                             'nadh_a1_mean', 
                             'nadh_a2_mean', 
                             'nadh_t1_mean', 
@@ -80,15 +79,11 @@ for timepoint in np.unique(df_data["time_hours"]):
                             'nadh_tau_mean_mean',
                             
                             # fad
-                            'fad_intensity_mean',
                             'fad_a1_mean',
                             'fad_a2_mean', 
                             'fad_t1_mean',
                             'fad_t2_mean',
                             'fad_tau_mean_mean',
-                            
-                            # rr
-                            "redox_ratio_mean",
                             ]]
     
     df_data_subset = df_data_subset.reset_index(drop=True)
