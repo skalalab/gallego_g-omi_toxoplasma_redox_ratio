@@ -34,7 +34,7 @@ suffixes = {
     'im_toxo': '_Cycle00001_Ch1_000001.ome.tif',
     'mask_cell': '_photons _cells.tiff',
     # 'mask_cytoplasm': '_photons_cyto.tiff',
-    'mask_toxo': '_Cycle00001_Ch1_000001.ome_toxo.tiff', 
+    'mask_toxo': '_Cycle00001_Ch1_000001.ome_mask_toxo.tiff', 
     # 'mask_nuclei': '_photons_nuclei.tiff',
     'a1[%]': '_a1\[%\].asc',
     'a2[%]': '_a2\[%\].asc',
@@ -46,12 +46,13 @@ suffixes = {
 #%% load dataset 
 base_name = "Cells-"
 
-"".zfill(3)
+# "".zfill(3)
 
 
 dict_dataset = {}
 
 for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
+    pass
     # print(row_data)
     
     # generate image handles 
@@ -198,7 +199,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # plt.show()
     
-#%%
+##%%
 
     
 df_dataset_output = pd.DataFrame(dict_dataset).transpose()
@@ -206,7 +207,7 @@ df_dataset_output.index.name = "index"
 df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in dict_dataset:
+for row_data in list(dict_dataset.keys())[:2]:
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
     # 

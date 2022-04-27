@@ -35,7 +35,7 @@ suffixes = {
     'im_toxo': '_Cycle00001_Ch1_000001.ome.tif',
     'mask_cell': '_photons _cells.tif',
     # 'mask_cytoplasm': '_photons_cyto.tiff',
-    'mask_toxo': '_Cycle00001_Ch1_000001.ome_toxo.tiff', 
+    'mask_toxo': '_Cycle00001_Ch1_000001.ome_mask_toxo.tiff', 
     # 'mask_nuclei': '_photons_nuclei.tiff',
     'a1[%]': '_a1\[%\].asc',
     'a2[%]': '_a2\[%\].asc',
