@@ -19,7 +19,7 @@ list_datasets = list(path_dicts.glob("*.csv"))
 from skimage.morphology import white_tophat, disk
 
 #%%
-for path_dict_dataset in list_datasets:
+for path_dict_dataset in list_datasets[:1]:
     pass
 
     df_dataset = pd.read_csv(path_dict_dataset)
@@ -78,13 +78,18 @@ for path_dict_dataset in list_datasets:
         ax[4].imshow(im_kmeans)
         ax[4].set_axis_off()
         
+        # im_kmeans = np.clip(im, np.percentile(im_diff_gauss,60), np.max(im_diff_gauss))
+        # ax[4].set_title("percentile")
+        # ax[4].imshow(im_kmeans > 0)
+        # ax[4].set_axis_off()    
+        
         im_fill_holes = binary_fill_holes(im_kmeans, disk(1))
         ax[5].set_title("binary fill holes")
         ax[5].imshow(im_fill_holes)
         ax[5].set_axis_off()
-        plt.savefig(path_output / f"{Path(row_data['toxo_photons']).stem}_grid.png")
-        plt.close()
+        # plt.savefig(path_output / f"{Path(row_data['toxo_photons']).stem}_grid.png")
+        # plt.close()
         plt.show()
         
-        tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", im_fill_holes)
+        # tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", im_fill_holes)
         

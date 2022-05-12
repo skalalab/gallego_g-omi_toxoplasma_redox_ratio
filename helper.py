@@ -2,15 +2,30 @@ from flim_tools.io import read_asc
 from pathlib import Path
 import pathlib
 import tifffile
+import numpy as np
 
 import matplotlib.pylab as plt
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
 import math
 
-def load_image(path):
-    # detects extension and loads image accordingly
-    # tif/tiff vs asc
+
+def load_image(path)-> np.ndarray:
+    """
+    Detects the extension and loads image accordingly
+    if its a tif/tiff or an asc
+
+    Parameters
+    ----------
+    path : pathlib path or str
+        path to the image.
+
+    Returns
+    -------
+    np.ndarray
+        array containig image.
+
+    """
     if not isinstance(path, pathlib.PurePath):
         path = Path(path)
     pass
