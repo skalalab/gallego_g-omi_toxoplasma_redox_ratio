@@ -78,8 +78,6 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         print(f"skipping: {handle_nadh}")
         continue
         
-            
-    
     # generate handle for fad
     handle_fad = base_name + str(int(row_data.fad)).zfill(3)
     bool_has_toxo = False
@@ -102,9 +100,10 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["nadh_a2"] = list(filter(re.compile(handle_nadh +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["nadh_t1"] = list(filter(re.compile(handle_nadh +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["nadh_t2"] = list(filter(re.compile(handle_nadh +  suffixes['t2']).search, list_str_all_files))[0]
+    dict_dataset[handle]["nadh_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
 
     # MASKS
-    path_mask_cell = list(filter(re.compile(f".*generated_masks_cell.*{handle_nadh +  suffixes['mask_cell']}").search, list_str_all_files))[0]
+    path_mask_cell = list(filter(re.compile(f".*napari_masks_cell.*{handle_nadh +  suffixes['mask_cell']}").search, list_str_all_files))[0]
     # path_mask_cyto = list(filter(re.compile(handle_nadh +  suffixes['mask_cytoplasm']).search, list_str_all_files))[0]
     # path_mask_nuclei = list(filter(re.compile(handle_nadh +  suffixes['mask_nuclei']).search, list_str_all_files))[0]    
     
@@ -117,7 +116,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["fad_a2"] = list(filter(re.compile(handle_fad +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t1"] = list(filter(re.compile(handle_fad +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t2"] = list(filter(re.compile(handle_fad +  suffixes['t2']).search, list_str_all_files))[0]
-    
+    dict_dataset[handle]["fad_chi"] = list(filter(re.compile(handle_fad +  suffixes['chi']).search, list_str_all_files))[0]
+
 
     # paths to toxo
     if bool_has_toxo:
@@ -201,14 +201,13 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
 
     # plt.show()
     
-
 #%%
 df_output_dataset = pd.DataFrame(dict_dataset).transpose()
 df_output_dataset.index.name = "index"
 df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in list(dict_dataset)[:2]:
+for row_data in tqdm(list(dict_dataset)[:2]):
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
         

@@ -75,7 +75,8 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
         handle_nadh == 'Cells-070' or \
         handle_toxo == 'Cells-105' or\
         handle_nadh == 'Cells-133' or\
-        handle_nadh == 'Cells-030' \
+        handle_nadh == 'Cells-030' or\
+        handle_nadh == 'Cells-092'  \
             :   
         print(f"skipping row nadh: {handle_nadh}")
         continue
@@ -110,7 +111,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["fad_a2"] = list(filter(re.compile(handle_fad +  suffixes['a2[%]']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t1"] = list(filter(re.compile(handle_fad +  suffixes['t1']).search, list_str_all_files))[0]
     dict_dataset[handle]["fad_t2"] = list(filter(re.compile(handle_fad +  suffixes['t2']).search, list_str_all_files))[0]
-    dict_dataset[handle]["fad_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
+    dict_dataset[handle]["fad_chi"] = list(filter(re.compile(handle_fad +  suffixes['chi']).search, list_str_all_files))[0]
 
     
     
@@ -207,7 +208,7 @@ df_dataset_output.index.name = "index"
 df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in list(dict_dataset.keys())[:2]:
+for row_data in tqdm(list(dict_dataset.keys())[:2]):
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
     # 
