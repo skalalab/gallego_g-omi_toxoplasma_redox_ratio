@@ -9,8 +9,9 @@ import numpy as np
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 
-path_all_features = list(path_project.glob("*props.csv"))[0] 
-df_data = pd.read_csv(path_all_features)
+filename_csv = "2022_05_25_all_props.csv"
+# path_all_features = list(path_project.glob("*props.csv"))[0] 
+df_data = pd.read_csv(path_project / filename_csv)
 path_output_figures = path_project / "figures"
 
 #%% PLOT ALL REDOX RATIO BY EXPERIMENT, TREATMENT, HOURS 

@@ -13,7 +13,7 @@ from flim_tools.image_processing import kmeans_threshold
 from flim_tools.visualization import compare_images
 from natsort import natsorted
 
-from skimage.morphology import binary_closing, remove_small_holes
+from skimage.morphology import binary_closing, remove_small_holes, binary_opening
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_datasets = path_project / "dictionaries"
@@ -23,8 +23,10 @@ list_dataset_dicts = list(path_datasets.glob("*.csv"))
 
 #%% COMPUTE OMI PARAMETERS
 
+debug = False
+skipped_images = []
 # iterate through dictionaries
-for dict_dataset in tqdm(list_dataset_dicts[:1]):
+for dict_dataset in tqdm(list_dataset_dicts[:]):
     pass
     df_data = pd.read_csv(dict_dataset, index_col=("index"))
     
@@ -38,8 +40,9 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
         # else:
         #     print("check set")
         
-        # visualize_dictionary(idx, row_data)
+        ## skip images with bad chi square
         
+        # visualize_dictionary(idx, row_data)
         nadh_photons = load_image(row_data.nadh_photons)
         nadh_a1 = load_image(row_data.nadh_a1)
         nadh_a2 = load_image(row_data.nadh_a2)
@@ -58,7 +61,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
         mask = load_image(row_data.mask_cell)
         
         # PROCESS MASK 
-        
         list_roi_values = list(np.unique(mask))
         list_roi_values.remove(0)
         
@@ -67,10 +69,11 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
         for roi_value in list_roi_values:
             pass
             temp_mask = mask == roi_value
+            # remove gaps in masks
             temp_mask = binary_closing(temp_mask)
             
-            
-            # TODO this isn't removing holes 
+            # remove small objects
+            temp_mask = binary_opening(temp_mask)
             
             # remove small objects
             pixels = 100
@@ -78,14 +81,16 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             mask_edited[temp_mask] = roi_value
 
 
-        filename = Path(rf"{row_data.mask_cell}")
-        compare_images(mask, f"original mask \n{filename.stem}", mask_edited, "edited mask")
-        
-        compare_images(nadh_photons, f"original image \n{filename.stem}", mask_edited, "edited mask")
+        if debug:
+            filename = Path(rf"{row_data.mask_cell}")
+            compare_images(mask, f"original mask \n{filename.stem}", mask_edited, "edited mask")
+            compare_images(nadh_photons, f"original image \n{filename.stem}", mask_edited, "edited mask")
 
         
         mask = mask_edited
         
+        if idx == '04_19_2019_idx_3':
+            print("stop")
         omi_props = regionprops_omi(idx, 
                                      label_image = mask, 
                                      im_nadh_intensity = nadh_photons, 
@@ -114,15 +119,16 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
         outliers_found = False
         for r in omi_props:
             pass
-            if omi_props[r]["nadh_t2_mean"] > 3500:
-                outliers_found = True
+            if omi_props[r]["nadh_chi_mean"] > 1.5: # omi_props[r]["nadh_t2_mean"] > 3500 or \
+                  outliers_found = True
                 
         if outliers_found:
             for param in [
-                    "redox_ratio_mean", \
-                    "nadh_t2_mean"
+                    # "redox_ratio_mean", \
+                    # "nadh_t2_mean"
+                    "nadh_chi_mean"
                     ]:
-            # param = "redox_ratio_mean"
+                # param = "redox_ratio_mean"
                 plt.title(f"{idx} \n{param}")
                 plt.imshow(mask)
                 for key in omi_props:
@@ -138,6 +144,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
                               markersize=3,
                               c="w")
                 plt.show()
+                print(f"skipping exporting outliers: {idx}")
+                skipped_images.append(idx)
+            continue
+            
+        # # skip exporting this image 
+        # if bool_skip_image:
+        #     continue
+        
         
         
         # quality control for rois  
@@ -189,8 +203,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             
             # visualize toxo
             # fig, ax = plt.subplots(1,5)
-            # ax[0].imshow(mask_cell)
-            # ax[0].set_title("cell masks")
+            # ax[0].imshow(mask)
+            # ax[0].set_title("mask cell")
             # ax[0].set_axis_off()
             # ax[1].imshow(mask_toxo > 0)
             # ax[1].set_title("toxo masks")
@@ -208,12 +222,10 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             # ax[4].set_axis_off()
             # plt.show()
             
-            
             for key in omi_props: 
                 if omi_props[key]["mask_label"] in list_roi_values:
                     omi_props[key]["pixels_toxo"] = np.sum(mask_cell_toxo_intersection == omi_props[key]["mask_label"])
          
-        
         ## CREATE DATAFRAME
         df_props = pd.DataFrame(omi_props).transpose()
         if bool_has_toxo:
@@ -230,7 +242,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             df_props[item_key] = row_data[item_key]
 
         df_props.to_csv(path_output_features / f"{idx}.csv")  
-
 
 
 #%% CREATE ONE CSV 
@@ -266,7 +277,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
 
 # plot all nadh chi
 
-df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_04_11_all_props.csv")
+df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_05_25_all_props.csv")
 
 plt.hist(df_all_props['nadh_chi_mean'], bins=100)
 plt.title("nadh_chi_mean")
