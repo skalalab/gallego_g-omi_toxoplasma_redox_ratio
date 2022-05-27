@@ -9,7 +9,7 @@ from helper import load_image, visualize_dictionary
 from datetime import date
 import math
 import numpy as np
-from flim_tools.image_processing import kmeans_threshold
+from flim_tools.image_processing import kmeans_threshold, four_color_theorem, four_color_to_unique
 from flim_tools.visualization import compare_images
 from natsort import natsorted
 
@@ -34,13 +34,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]):#iterate through sets
         pass
-    
-        # if idx != '3_18_2019_idx_118' :# "3_18_2019_idx_111" or :
-        #     continue
-        # else:
-        #     print("check set")
-        
-        ## skip images with bad chi square
         
         # visualize_dictionary(idx, row_data)
         nadh_photons = load_image(row_data.nadh_photons)
@@ -89,8 +82,15 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         
         mask = mask_edited
         
-        if idx == '04_19_2019_idx_3':
-            print("stop")
+        # this guarantees that rois have a unique value
+        # original masks have rois with the same value currently
+        
+        mask_unique, solutions = four_color_theorem(mask)
+        mask_unique = four_color_to_unique(mask_unique)
+        if debug:
+            compare_images(mask, "original mask", mask_unique, "after four color relabeling")
+        mask = mask_unique
+        
         omi_props = regionprops_omi(idx, 
                                      label_image = mask, 
                                      im_nadh_intensity = nadh_photons, 
@@ -119,14 +119,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         outliers_found = False
         for r in omi_props:
             pass
-            if omi_props[r]["nadh_chi_mean"] > 1.5: # omi_props[r]["nadh_t2_mean"] > 3500 or \
+            if omi_props[r]["nadh_chi_median"] > 1.5: # omi_props[r]["nadh_t2_mean"] > 3500 or \
                   outliers_found = True
                 
         if outliers_found:
             for param in [
                     # "redox_ratio_mean", \
                     # "nadh_t2_mean"
-                    "nadh_chi_mean"
+                    "nadh_chi_median"
                     ]:
                 # param = "redox_ratio_mean"
                 plt.title(f"{idx} \n{param}")
@@ -148,16 +148,9 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 skipped_images.append(idx)
             continue
             
-        # # skip exporting this image 
-        # if bool_skip_image:
-        #     continue
-        
-        
         
         # quality control for rois  
         # chi square mean above 1.5 should be looked at
-        
-        
         
         # look for ROIs with 
         # import matplotlib.patches as mpatches
@@ -277,13 +270,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
 
 # plot all nadh chi
 
-df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_05_25_all_props.csv")
+df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_05_26_all_props.csv")
 
-plt.hist(df_all_props['nadh_chi_mean'], bins=100)
-plt.title("nadh_chi_mean")
+key = 'nadh_chi_median'
+plt.hist(df_all_props[key], bins=100)
+plt.title(key)
 plt.show()
 
-df_outliers = df_all_props[df_all_props['nadh_chi_median'] > 1.5]
+df_outliers = df_all_props[df_all_props[key] > 1.5]
 set_paths_nadh_chi_files = natsorted(set(df_outliers["nadh_chi"]))
 
 #%%
@@ -316,7 +310,7 @@ for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
     
     for idx, outlier_row in df_subset.iterrows():
         pass
-        text = f"{outlier_row.nadh_chi_mean:.2f}"
+        text = f"{outlier_row.nadh_chi_median:.2f}"
         # text = f"{outlier_row.mask_label}"
         if outlier_row.mask_label == 71:
             print("roi 71")
@@ -332,8 +326,19 @@ for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
                      markersize=1,
                      c="w")
     plt.show()
-    
 
+#%%
 
-    
-    
+# import tifffile
+
+# p_chi = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\Cells-005_chi.asc")
+# p_nadh = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\040619\Cells-005\Cells-005_Cycle00001_Ch2_000001.ome.tif")
+# im_chi = load_image(p_chi)
+# im = load_image(p_nadh) 
+# p_mask = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\napari_masks_cell\Cells-005_photons _cells.tiff")
+# mask = load_image(p_mask)
+# plt.imshow(mask)
+# for r in np.unique(mask):
+#     plt.imshow(mask == r)
+#     plt.show()
+# plt.imshow(np.clip(im_chi, 0 , np.percentile(im_chi, 99))) 

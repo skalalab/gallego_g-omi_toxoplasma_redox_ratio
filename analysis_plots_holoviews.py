@@ -99,12 +99,13 @@ df_media_media_toxo = df_data[df_data["treatment"].isin(["media", "media+toxo"])
 
 list_timepoints_hrs = np.unique(df_data["time_hours"])
 
-# redox ratio means across timepoints for control/media condition
-dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[(df_media_media_toxo["time_hours"] == timepoint_hrs) & \
-                                                            (df_media_media_toxo["treatment"] == "media")]["redox_ratio_norm_mean"]) \
-                                                            for timepoint_hrs in list_timepoints_hrs  }
-
-# df_media_media_toxo["redox_ratio_normalized"] = np.NaN
+# Determine mean of control('media') timepoints to normalize against
+# compute means of timepoints just for the media condition
+dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[
+                                                (df_media_media_toxo["time_hours"] == timepoint_hrs) & \
+                                                (df_media_media_toxo["treatment"] == "media")
+                                              ]["redox_ratio_norm_mean"]
+                                       ) for timepoint_hrs in list_timepoints_hrs  }
 
 # for timepoint in dict_means:
 #     pass
@@ -112,25 +113,26 @@ dict_means = { timepoint_hrs : np.mean(df_media_media_toxo.loc[(df_media_media_t
 #     df_media_media_toxo[(df_media_media_toxo["time_hours"]==timepoint)]["redox_ratio_normalized"] = \
 #         df_media_media_toxo[(df_media_media_toxo["time_hours"]==timepoint) ]["redox_ratio_mean"] - dict_means[timepoint]
 
+# add new 
 for idx, row_data in df_media_media_toxo.iterrows():
     pass
-    df_media_media_toxo.loc[idx,"redox_ratio_normalized"] = row_data.loc[("redox_ratio_norm_mean")] - dict_means[row_data.time_hours]
+    df_media_media_toxo.loc[idx,"redox_ratio_normalized_by_mean"] = row_data.loc[("redox_ratio_norm_mean")] - dict_means[row_data.time_hours]
 
 kdims = [
         ("time_hours","Timepoint"),
         ("treatment","Media"),
-
     ]
 
-vdims = [("redox_ratio_normalized","Redox Ratio")] 
+vdims = [("redox_ratio_normalized_by_mean","Redox Ratio")] 
 boxwhisker_media_toxo = hv.BoxWhisker(df_media_media_toxo, kdims=kdims, vdims=vdims)
 
 boxwhisker_media_toxo.opts(
     width=1600,
     height=800,
     tools=["hover"],
-    title="Redox Ratio \nAll Data | normalized to media/control"
-    
+    title="Redox Ratio \nAll Data | normalized to media/control",
+    box_color="treatment",
+    cmap=[ '#FC5353','#1690FF'],
     )
 
 hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_normalized_media_media_toxo.html")
