@@ -35,8 +35,8 @@ bw_experiment_treatment_time.opts(
     xrotation=90
     )
 
-hv.save(bw_experiment_treatment_time, path_output_figures / f"boxwhisker_experiment_treatment_time.html")
-#%% PLOT REDOX RATIO BY EXPERIMENT 
+hv.save(bw_experiment_treatment_time, path_output_figures / f"all_data_boxwhisker_experiment_treatment_time.html")
+#%% PLOT LIFETIME PARAMETERS BY EXPERIMENT by image
 
 for experiment in np.unique(df_data["experiment"]):
     pass
@@ -66,14 +66,13 @@ for experiment in np.unique(df_data["experiment"]):
     
     hv.save(bw_treatment_time_image, path_output_figures / f"{experiment}_by_images.html")
     
-#%% PLOT MEDIA  AND MEDIA+TOXO
+#%% PLOT MEDIA AND MEDIA+TOXO - ALL EXPERIMENTS
 
 df_media_media_toxo = df_data[df_data["treatment"].isin(["media", "media+toxo"])]
 
 kdims = [
         ("time_hours","Timepoint"),
         ("treatment","Media"),
-
     ]
 
 vdims = [("redox_ratio_norm_mean","Redox Ratio")] 
@@ -90,7 +89,7 @@ boxwhisker_media_toxo.opts(
     cmap=[ '#FC5353','#1690FF'],
     )
 
-hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_media_media_toxo.html")
+hv.save(boxwhisker_media_toxo, path_output_figures / f"all_data_boxwhisker_media_media_toxo.html")
 
 #%% MEDIA AND MEDIA+TOXO NORMALIZED TO MEDIA/CONTROL
 
@@ -135,27 +134,99 @@ boxwhisker_media_toxo.opts(
     cmap=[ '#FC5353','#1690FF'],
     )
 
-hv.save(boxwhisker_media_toxo, path_output_figures / f"boxwhisker_normalized_media_media_toxo.html")
+hv.save(boxwhisker_media_toxo, path_output_figures / f"all_data_boxwhisker_normalized_media_media_toxo.html")
 
+#%%
+# parameters to plot
+list_omi_parameters = {
+    'NAD(P)H Intensity' :'nadh_intensity_mean',
+    'NAD(P)H a1':'nadh_a1_mean',  
+    'NAD(P)H a2':'nadh_a2_mean',
+    'NAD(P)H t1':'nadh_t1_mean',  
+    'NAD(P)H t2':'nadh_t2_mean',
+    'NAD(P)H Tm':'nadh_tau_mean_mean', 
+    'FAD Intensity':'fad_intensity_mean',  
+    'FAD a1': 'fad_a1_mean',
+    'FAD a2': 'fad_a2_mean',  
+    'FAD t1': 'fad_t1_mean',
+    'FAD t2': 'fad_t2_mean',  
+    'FAD Tm' : 'fad_tau_mean_mean',
+    'Redox Ratio' : 'redox_ratio_norm_mean'
+    }
+#%% PLOT ALL LIFETIME PARAMETERS - ALL EXPERIMENTS
 
-#%% UMAP
+df_media_media_toxo = df_data[df_data["treatment"].isin(["media", "media+toxo"])]
 
-
-list_omi_parameters = [
-    'nadh_intensity_mean',
-    'nadh_a1_mean',  
-    'nadh_a2_mean',
-    'nadh_t1_mean',  
-    'nadh_t2_mean',
-    'nadh_tau_mean_mean', 
-    'fad_intensity_mean',  
-    'fad_a1_mean',
-    'fad_a2_mean',  
-    'fad_t1_mean',
-    'fad_t2_mean',  
-    'fad_tau_mean_mean',
-    'redox_ratio_mean'
+kdims = [
+        ("time_hours","Timepoint"),
+        ("treatment","Media"),
     ]
+
+# iterate through the various paremeters
+for dict_key in list_omi_parameters:
+    pass
+    vdims = [(list_omi_parameters[dict_key], dict_key)] 
+    
+    boxwhisker_media_toxo = hv.BoxWhisker(df_media_media_toxo, kdims=kdims, vdims=vdims)
+    
+    str_experiments = ' |'.join(np.unique(df_media_media_toxo.experiment))
+    boxwhisker_media_toxo.opts(
+        width=1600,
+        height=800,
+        tools=["hover"],
+        title=f"{dict_key} \nExperiments: {str_experiments}",
+        box_color="treatment",
+        # cmap='Category20',
+        cmap=[ '#FC5353','#1690FF'],
+        )
+    
+    hv.save(boxwhisker_media_toxo, path_output_figures / f"all_data_boxwhisker_media_media_toxo_{dict_key}.html")
+
+
+#%% PLOT LIFETIME PARAMETERS BY EXPERIMENT 
+
+for experiment in np.unique(df_data["experiment"]):
+    pass
+
+    df_props_exp = df_data[df_data["experiment"] == experiment]
+    df_props_exp = df_props_exp[df_props_exp["treatment"].isin(["media", "media+toxo"])]
+ 
+
+    # list_image_names = [base_name.rsplit("_",1)[0] for base_name in list(df_props_exp["base_name"].values)]
+    # df_props_exp["image_name"] = list_image_names
+    
+    
+    kdims = [
+            # ("experiment", "Experiment"),
+            ("time_hours","Time (hrs)"),
+            ("treatment","Treatment"),
+            # ("image_set","Image Set")
+            # ("experiment", "Experiment")
+            ]
+    for dict_key in list_omi_parameters:
+        pass
+        vdims = [(list_omi_parameters[dict_key], dict_key),
+                 ] 
+        # vdims = [("redox_ratio_norm_mean","Redox Ratio Mean")]
+    
+        bw_treatment_time_image = hv.BoxWhisker(df_props_exp, vdims=vdims, kdims=kdims)
+        
+        figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key}"
+        
+        bw_treatment_time_image.opts(
+            title=f"{figure_title} \nExperiment: {experiment}",
+            width = 1000,
+            height = 600,
+            tools=["hover"],
+            xrotation=90,
+            cmap=[ '#FC5353','#1690FF'],
+            box_color="treatment",
+            )
+        
+        hv.save(bw_treatment_time_image, path_output_figures / f"{experiment}_{dict_key}.html")
+
+
+
 
 
 

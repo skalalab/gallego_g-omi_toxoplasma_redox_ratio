@@ -22,7 +22,7 @@ path_output_features = path_project / "features"
 list_dataset_dicts = list(path_datasets.glob("*.csv"))
 
 #%% COMPUTE OMI PARAMETERS
-;
+
 debug = False
 skipped_images = []
 # iterate through dictionaries
