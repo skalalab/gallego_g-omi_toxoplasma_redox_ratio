@@ -98,7 +98,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["nadh_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
 
     # MASKS
-    path_mask_cell = list(filter(re.compile(handle_nadh +  suffixes['mask_cell']).search, list_str_all_files))[0]
+    path_mask_cell = list(filter(re.compile(f".*napari_masks_cell.*{handle_nadh +  suffixes['mask_cell']}").search, list_str_all_files))[0]
     # path_mask_cyto = list(filter(re.compile(handle_nadh +  suffixes['mask_cytoplasm']).search, list_str_all_files))[0]
     # path_mask_nuclei = list(filter(re.compile(handle_nadh +  suffixes['mask_nuclei']).search, list_str_all_files))[0]    
     

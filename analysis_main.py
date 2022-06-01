@@ -22,7 +22,7 @@ path_output_features = path_project / "features"
 list_dataset_dicts = list(path_datasets.glob("*.csv"))
 
 #%% COMPUTE OMI PARAMETERS
-
+;
 debug = False
 skipped_images = []
 # iterate through dictionaries
@@ -148,7 +148,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 skipped_images.append(idx)
             continue
             
-        
         # quality control for rois  
         # chi square mean above 1.5 should be looked at
         

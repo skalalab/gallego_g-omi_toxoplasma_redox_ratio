@@ -11,11 +11,14 @@ from skimage import data
 
 # LOAD DATASET
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_dict = path_project / r"dictionaries\04-19-2019-keys.csv"
+dataset_id = '3-18-2019' #'04-19-2019' 
+path_dict = path_project / fr"dictionaries\{dataset_id}-keys.csv"
 df_dataset = pd.read_csv(path_dict, index_col="index")
 
 # LOAD PATHS TO PREVIOUSLY GENERATED MASKS
-path_output = path_project / r"4-6-2019\040619_Katie_SPC\napari_masks_cell"
+# path_output = path_project / fr"{dataset_id}\040619_Katie_SPC\napari_masks_cell"
+path_output = path_project / fr"{dataset_id}\03182019_Katie\napari_masks_cell"
+
 list_str_path_generated_masks = list(map(str,list(path_output.glob("*.tiff"))))
 
 
@@ -27,7 +30,7 @@ dict_suffixes = {
     }
 
 # ITERATE THROUGH ALL THE IMAGES
-for idx, row_data in list(df_dataset.iterrows())[:2]:
+for idx, row_data in list(df_dataset.iterrows())[:]:
     pass
 
     # CREATE AND MODIFY VIEWER
