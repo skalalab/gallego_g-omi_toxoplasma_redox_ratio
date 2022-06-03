@@ -12,7 +12,7 @@ path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 filename_csv = "2022_05_25_all_props.csv"
 # path_all_features = list(path_project.glob("*props.csv"))[0] 
 df_data = pd.read_csv(path_project / filename_csv)
-path_output_figures = path_project / "figures"
+path_output_figures = path_project / "figures" / "holoviews"
 
 #%% PLOT ALL REDOX RATIO BY EXPERIMENT, TREATMENT, HOURS 
 
@@ -224,9 +224,5 @@ for experiment in np.unique(df_data["experiment"]):
             )
         
         hv.save(bw_treatment_time_image, path_output_figures / f"{experiment}_{dict_key}.html")
-
-
-
-
 
 
