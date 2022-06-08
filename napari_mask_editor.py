@@ -29,8 +29,11 @@ dict_suffixes = {
     "mask_cells" : "_mask_cells.tiff"
     }
 
+
+index_start = 0 # remember lists are zero index 
+index_end = 3   # upto but not including
 # ITERATE THROUGH ALL THE IMAGES
-for idx, row_data in list(df_dataset.iterrows())[:]:
+for idx, row_data in list(df_dataset.iterrows())[index_start : index_end]:
     pass
 
     # CREATE AND MODIFY VIEWER
