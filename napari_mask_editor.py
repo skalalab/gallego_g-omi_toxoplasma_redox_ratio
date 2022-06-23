@@ -23,7 +23,6 @@ list_str_path_generated_masks = list(map(str,list(path_output.glob("*.tiff"))))
 
 
 # edit suffixes 
-
 dict_suffixes = {
     "nadh_photons" : "_photons.tiff",
     "mask_cells" : "_mask_cells.tiff"
@@ -31,7 +30,7 @@ dict_suffixes = {
 
 
 index_start = 0 # remember lists are zero index 
-index_end = 3   # upto but not including
+index_end = 1  # up to but not including
 # ITERATE THROUGH ALL THE IMAGES
 for idx, row_data in list(df_dataset.iterrows())[index_start : index_end]:
     pass
@@ -66,6 +65,9 @@ for idx, row_data in list(df_dataset.iterrows())[index_start : index_end]:
     if mask is None:
         print("loaded original mask")
         mask = tifffile.imread(row_data.mask_cell)
+
+    #change to np.uint16 so we have more values for rois 2^16
+    mask = mask.astype(np.uint16)
     
     # POPULATE VIEWER
     layer_intensity = viewer.add_image(intensity, name=Path(row_data.nadh_photons).name)
