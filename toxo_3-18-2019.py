@@ -18,7 +18,6 @@ path_experiment = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio
 path_dataset = path_experiment / "3-18-2019" / "03182019_Katie"
 
 path_output = path_experiment / "dictionaries"
-
 path_excel = r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\3-18-2019\3-18-2019-keys.xlsx"
 
 list_all_files = list(path_dataset.rglob("*"))
@@ -208,7 +207,7 @@ df_dataset_output.index.name = "index"
 df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset.keys())[:2]):
+for row_data in tqdm(list(dict_dataset.keys())[:3]):
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
     # 

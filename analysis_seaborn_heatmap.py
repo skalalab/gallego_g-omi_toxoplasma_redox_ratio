@@ -12,8 +12,13 @@ import pandas as pd
 from sklearn import preprocessing
 #%%
 
+
+analysis_type = 'whole_cell_wo_toxo'
+# analysis_type = 'whole_cell'
+# analysis_type = 'toxo_inside_vs_outside'
+
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_all_features = list(path_project.glob("*props.csv"))[0] 
+path_all_features = list(path_project.glob(f"*{analysis_type}.csv"))[0] 
 
 #%%
 

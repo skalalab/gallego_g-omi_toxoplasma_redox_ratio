@@ -207,7 +207,7 @@ df_output_dataset.index.name = "index"
 df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset)[:5]):
+for row_data in tqdm(list(dict_dataset)[:]):
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
         

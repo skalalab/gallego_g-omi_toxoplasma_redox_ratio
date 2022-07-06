@@ -30,7 +30,7 @@ dict_suffixes = {
 
 
 index_start = 0 # remember lists are zero index 
-index_end = 1  # up to but not including
+index_end =  122 # up to but not including
 # ITERATE THROUGH ALL THE IMAGES
 for idx, row_data in list(df_dataset.iterrows())[index_start : index_end]:
     pass

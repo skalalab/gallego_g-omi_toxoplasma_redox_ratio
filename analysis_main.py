@@ -21,6 +21,12 @@ path_output_features = path_project / "features"
 
 list_dataset_dicts = list(path_datasets.glob("*.csv"))
 
+# DEFINE ANALYSIS TYPE 
+# analysis_type = "whole_cell"
+# analysis_type = "whole_cell_wo_toxo"
+analysis_type = "toxo_inside_vs_outside"
+
+path_output_features = path_output_features / analysis_type
 #%% COMPUTE OMI PARAMETERS
 
 debug = False
@@ -34,8 +40,71 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]):#iterate through sets
         pass
+    
+    ###### MODIFY MASKS AS NEEDED DEPENDING ON ANALYSIS 
+        if analysis_type == "whole_cell":
+            mask = load_image(row_data.mask_cell)
+            # plt.title("no toxo")
+            # plt.imshow(mask)
+            # plt.show()
+           
+        # if has toxo stamp it out
+        elif analysis_type == "whole_cell_wo_toxo": # if maks have a toxo mask, exclude toxo
+            mask = load_image(row_data.mask_cell)
+            plt.title("NO toxo")
+            
+            #if has toxo, remove it
+            mask_toxo = None
+            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
+                mask_toxo = load_image(row_data.mask_toxo)
+                mask = mask * np.invert(mask_toxo)
+                plt.title("had toxo")
+            plt.imshow(mask)
+            plt.show()
+                
+        # quantify toxo inside and outside
+        elif analysis_type == "toxo_inside_vs_outside": # compute just toxo extracted from mask
+            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
+                mask_toxo = load_image(row_data.mask_toxo)
+                mask_im = load_image(row_data.mask_cell)
+                
+                
+                # plt.imshow(load_image(row_data.nadh_photons))
+                # plt.imshow(load_image(row_data.toxo_photons))
+                 
+                toxo_in_cell = np.bitwise_and(mask_toxo, mask_im>0 )
+                toxo_outside_cell = mask_toxo * np.invert(toxo_in_cell)
+                
+                
+                mask = np.zeros_like(toxo_in_cell, dtype=np.uint16)
+                mask[toxo_in_cell] = 1 # toxo in cell
+                mask[toxo_outside_cell] = 2 # toxo outside cell
+
+                fig, ax = plt.subplots(1,3)
+                
+                ax[0].set_axis_off()
+                ax[0].set_title('nadh')
+                ax[0].imshow(mask_im)
+                
+                ax[1].set_axis_off()
+                ax[1].set_title('toxo')
+                ax[1].imshow(mask_toxo)
+                
+                ax[2].set_axis_off()
+                ax[2].set_title('combined mask')
+                ax[2].imshow(mask)
+                
+                # plt.title("toxo inside vs outside")
+                # plt.imshow(mask)
+                plt.show()
+                
+            else:
+                continue # skip to next image that has toxo
         
-        # visualize_dictionary(idx, row_data)
+        
+        ######
+        
+         # visualize_dictionary(idx, row_data)
         nadh_photons = load_image(row_data.nadh_photons)
         nadh_a1 = load_image(row_data.nadh_a1)
         nadh_a2 = load_image(row_data.nadh_a2)
@@ -50,46 +119,52 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         fad_t2 = load_image(row_data.fad_t2)
         fad_chi = load_image(row_data.fad_chi)
         
-        # LOAD MASK
-        mask = load_image(row_data.mask_cell)
         
-        # PROCESS MASK 
-        list_roi_values = list(np.unique(mask))
-        list_roi_values.remove(0)
-        
-        mask_edited = np.zeros_like(mask)
-        # fill small holes in masks
-        for roi_value in list_roi_values:
-            pass
-            temp_mask = mask == roi_value
-            # remove gaps in masks
-            temp_mask = binary_closing(temp_mask)
+        # PROCESS MASK
+        # Gina's whole cell masks sometimes contain stray pixels 
+        # and sometimes missing pixels in mask
+        # this aims to try to solve that
+        # not a problem for toxo inside vs outside masks
+        if analysis_type != "toxo_inside_vs_outside":
+            list_roi_values = list(np.unique(mask))
+            list_roi_values.remove(0)
             
-            # remove small objects
-            temp_mask = binary_opening(temp_mask)
+            mask_edited = np.zeros_like(mask)
             
-            # remove small objects
-            pixels = 100
-            temp_mask = remove_small_holes(temp_mask, area_threshold=pixels)
-            mask_edited[temp_mask] = roi_value
-
-
-        if debug:
-            filename = Path(rf"{row_data.mask_cell}")
-            compare_images(mask, f"original mask \n{filename.stem}", mask_edited, "edited mask")
-            compare_images(nadh_photons, f"original image \n{filename.stem}", mask_edited, "edited mask")
-
+            # fill small holes in masks
+            for roi_value in list_roi_values:
+                pass
+                temp_mask = mask == roi_value
+                # remove gaps in masks
+                temp_mask = binary_closing(temp_mask)
+                
+                # remove small objects
+                temp_mask = binary_opening(temp_mask)
+                
+                # remove small objects
+                pixels = 100
+                temp_mask = remove_small_holes(temp_mask, area_threshold=pixels)
+                mask_edited[temp_mask] = roi_value
+    
+    
+            if debug:
+                filename = Path(rf"{row_data.mask_cell}")
+                compare_images(mask, f"original mask \n{filename.stem}", mask_edited, "edited mask")
+                compare_images(nadh_photons, f"original image \n{filename.stem}", mask_edited, "edited mask")
+    
+            
+            mask = mask_edited
+            
+            # this guarantees that rois have a unique value
+            # original masks have some rois with the same value currently
+            mask_unique, solutions = four_color_theorem(mask)
+            mask_unique = four_color_to_unique(mask_unique)
+            if debug:
+                compare_images(mask, "original mask", mask_unique, "after four color relabeling")
+            mask = mask_unique
+        # end fixing Gina's masks
         
-        mask = mask_edited
-        
-        # this guarantees that rois have a unique value
-        # original masks have rois with the same value currently
-        
-        mask_unique, solutions = four_color_theorem(mask)
-        mask_unique = four_color_to_unique(mask_unique)
-        if debug:
-            compare_images(mask, "original mask", mask_unique, "after four color relabeling")
-        mask = mask_unique
+       
         
         omi_props = regionprops_omi(idx, 
                                      label_image = mask, 
@@ -178,6 +253,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         # plt.show()
         
         
+        for key_roi in omi_props:
+            pass
+            if omi_props[key_roi]['mask_label'] == 1: # lines 82-83 define these labels
+                omi_props[key_roi]['toxo_location'] = 'inside'
+                
+            elif omi_props[key_roi]['mask_label'] ==2:
+                omi_props[key_roi]['toxo_location'] = 'outside'
+        
         # QUANTIFY TOXO
         ## initialize column of toxo pixels
         for key_roi in omi_props:
@@ -253,7 +336,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # # label index of complete dictionary 
     # df_all_props = df_all_props.set_index("base_name", drop=True)
     
-    
     # treatment has pH, make those a string or pandas will be angry
     # df_all_props["treatment"] = df_all_props["treatment"].astype(str)
 
@@ -263,68 +345,69 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     ### Save df for analysis 
     path_feature_summaries = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
     d = date.today().strftime("%Y_%m_%d")
-    df_all_props.to_csv(path_feature_summaries / f"{d}_all_props.csv")
+    df_all_props = df_all_props.set_index('base_name_with_roi', drop=True)
+    df_all_props.to_csv(path_feature_summaries / f"{d}_all_props_{analysis_type}.csv")
     
-#%%
+#%% PLOT VALUES WITH LARGE MEDIAN CHI SQUARED
 
-# plot all nadh chi
+# # plot all nadh chi
 
-df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_05_26_all_props.csv")
+# df_all_props = pd.read_csv(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\2022_05_26_all_props.csv")
 
-key = 'nadh_chi_median'
-plt.hist(df_all_props[key], bins=100)
-plt.title(key)
-plt.show()
+# key = 'nadh_chi_median'
+# plt.hist(df_all_props[key], bins=100)
+# plt.title(key)
+# plt.show()
 
-df_outliers = df_all_props[df_all_props[key] > 1.5]
-set_paths_nadh_chi_files = natsorted(set(df_outliers["nadh_chi"]))
+# df_outliers = df_all_props[df_all_props[key] > 1.5]
+# set_paths_nadh_chi_files = natsorted(set(df_outliers["nadh_chi"]))
 
-#%%
-from ast import literal_eval
-for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
-    pass
+# # #%%
+# from ast import literal_eval
+# for path_im_chi_outlier in set_paths_nadh_chi_files[:]:
+#     pass
     
-    df_subset = df_outliers[df_outliers["nadh_chi"] == path_im_chi_outlier]
-    df_subset = df_subset.reset_index(drop=True)
-    fig, ax = plt.subplots(1,4, figsize=(10,3))
+#     df_subset = df_outliers[df_outliers["nadh_chi"] == path_im_chi_outlier]
+#     df_subset = df_subset.reset_index(drop=True)
+#     fig, ax = plt.subplots(1,4, figsize=(10,3))
     
-    fig.suptitle(f"{df_subset.base_name_with_roi[0].rsplit('_',1)[0]}")
-    ax[0].imshow(load_image(df_subset.nadh_photons[0]))
-    ax[0].set_title('nadh photons')
-    ax[0].set_axis_off()
+#     fig.suptitle(f"{df_subset.base_name_with_roi[0].rsplit('_',1)[0]}")
+#     ax[0].imshow(load_image(df_subset.nadh_photons[0]))
+#     ax[0].set_title('nadh photons')
+#     ax[0].set_axis_off()
     
-    im_chi = load_image(df_subset.nadh_chi[0])
-    ax[1].imshow(im_chi, vmax=1.5)
-    ax[1].set_title('nadh chi')
-    ax[1].set_axis_off()
+#     im_chi = load_image(df_subset.nadh_chi[0])
+#     ax[1].imshow(im_chi, vmax=1.5)
+#     ax[1].set_title('nadh chi')
+#     ax[1].set_axis_off()
     
-    mask = load_image(df_subset.mask_cell[0])
-    ax[2].imshow( (mask > 0) * im_chi, )#vmax=1.5
-    ax[2].set_title('nadh chi masked')
-    ax[2].set_axis_off()
+#     mask = load_image(df_subset.mask_cell[0])
+#     ax[2].imshow( (mask > 0) * im_chi, )#vmax=1.5
+#     ax[2].set_title('nadh chi masked')
+#     ax[2].set_axis_off()
     
-    ax[3].imshow(mask)
-    ax[3].set_title('mask')
-    ax[3].set_axis_off()
+#     ax[3].imshow(mask)
+#     ax[3].set_title('mask')
+#     ax[3].set_axis_off()
     
-    for idx, outlier_row in df_subset.iterrows():
-        pass
-        text = f"{outlier_row.nadh_chi_median:.2f}"
-        # text = f"{outlier_row.mask_label}"
-        if outlier_row.mask_label == 71:
-            print("roi 71")
-        centroid = literal_eval(outlier_row["centroid"])
-        ax[2].text(centroid[1],
-                 centroid[0],
-                 text,
-                 c="w",
-                 fontsize=6)
-        ax[2].plot(centroid[1],
-                     centroid[0],
-                     marker='o',
-                     markersize=1,
-                     c="w")
-    plt.show()
+#     for idx, outlier_row in df_subset.iterrows():
+#         pass
+#         text = f"{outlier_row.nadh_chi_median:.2f}"
+#         # text = f"{outlier_row.mask_label}"
+#         if outlier_row.mask_label == 71:
+#             print("roi 71")
+#         centroid = literal_eval(outlier_row["centroid"])
+#         ax[2].text(centroid[1],
+#                  centroid[0],
+#                  text,
+#                  c="w",
+#                  fontsize=6)
+#         ax[2].plot(centroid[1],
+#                      centroid[0],
+#                      marker='o',
+#                      markersize=1,
+#                      c="w")
+#     plt.show()
 
 #%%
 

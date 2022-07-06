@@ -14,12 +14,17 @@ from itertools import combinations
 import natsort
 #%% import dataset 
 
-path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
+# analysis_type = 'whole_cell_wo_toxo'
+# analysis_type = 'whole_cell'
+analysis_type = 'toxo_inside_vs_outside'
 
-filename_csv = "2022_05_25_all_props.csv"
+path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
+path_all_features = list(path_project.glob(f"*{analysis_type}.csv"))[0] 
+
+# filename_csv = "2022_05_25_all_props.csv"
 # path_all_features = list(path_project.glob("*props.csv"))[0] 
-df_data = pd.read_csv(path_project / filename_csv)
-path_output_figures = path_project / "figures" / "seaborn"
+df_data = pd.read_csv(path_all_features)
+path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
 #%% PLOT ALL by timepoint 
 
