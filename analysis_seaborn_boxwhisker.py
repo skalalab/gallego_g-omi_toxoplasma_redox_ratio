@@ -14,9 +14,8 @@ from itertools import combinations
 import natsort
 #%% import dataset 
 
+analysis_type = 'whole_cell'
 # analysis_type = 'whole_cell_wo_toxo'
-# analysis_type = 'whole_cell'
-analysis_type = 'toxo_inside_vs_outside'
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*{analysis_type}.csv"))[0] 
@@ -106,10 +105,12 @@ for dict_key in list_omi_parameters:
     #                 order=order,
     #                 dodge=True
     #             )
-    figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key}"
-    plt.title(f"{figure_title} \n {p_values}")
+    figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox Ratio" else f"{dict_key}"
+    plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
     plt.xlabel("Time Point (hrs)")
     plt.ylabel(dict_key)
+    if dict_key == "Redox Ratio":
+        plt.ylim((0,1))
     plt.tight_layout()
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
 
@@ -180,7 +181,7 @@ for experiment in np.unique(df_data['experiment']):
         #                 dodge=True
         #             )
         figure_title = f"{dict_key} | Dataset: {experiment} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key} | Dataset: {experiment}"
-        plt.title(f"{figure_title} \n {p_values}")
+        plt.title(f"{analysis_type} \n{figure_title} \n{p_values}")
         plt.xlabel("Time Point (hrs)")
         plt.ylabel(dict_key)
         plt.tight_layout()

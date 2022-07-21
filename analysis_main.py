@@ -10,9 +10,10 @@ from datetime import date
 import math
 import numpy as np
 from flim_tools.image_processing import kmeans_threshold, four_color_theorem, four_color_to_unique
+from flim_tools.metrics import percent_content_captured
 from flim_tools.visualization import compare_images
 from natsort import natsorted
-
+import tifffile
 from skimage.morphology import binary_closing, remove_small_holes, binary_opening
 
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
@@ -24,7 +25,9 @@ list_dataset_dicts = list(path_datasets.glob("*.csv"))
 # DEFINE ANALYSIS TYPE 
 # analysis_type = "whole_cell"
 # analysis_type = "whole_cell_wo_toxo"
-analysis_type = "toxo_inside_vs_outside"
+# analysis_type = "toxo_inside_vs_outside"
+analysis_type = "toxo_inside_cells"
+
 
 path_output_features = path_output_features / analysis_type
 #%% COMPUTE OMI PARAMETERS
@@ -48,19 +51,22 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
             # plt.imshow(mask)
             # plt.show()
            
-        # if has toxo stamp it out
+        # whole cell without toxo -- if has toxo stamp it out
         elif analysis_type == "whole_cell_wo_toxo": # if maks have a toxo mask, exclude toxo
             mask = load_image(row_data.mask_cell)
             plt.title("NO toxo")
-            
-            #if has toxo, remove it
-            mask_toxo = None
-            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
-                mask_toxo = load_image(row_data.mask_toxo)
-                mask = mask * np.invert(mask_toxo)
-                plt.title("had toxo")
             plt.imshow(mask)
             plt.show()
+            # if has toxo, remove it
+            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
+                mask_toxo = load_image(row_data.mask_toxo)
+                mask_orig = mask
+                mask = mask * np.invert(mask_toxo)
+                save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\whole_cell_wo_toxo\intermediates")
+                compare_images(mask_orig, "original", mask, "wo toxo", 
+                               suptitle=idx, 
+                               save_path=save_path / f"{idx}.tiff")
+
                 
         # quantify toxo inside and outside
         elif analysis_type == "toxo_inside_vs_outside": # compute just toxo extracted from mask
@@ -101,7 +107,44 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
             else:
                 continue # skip to next image that has toxo
         
-        
+        elif analysis_type == "toxo_inside_cells":
+            mask = load_image(row_data.mask_cell)
+            # these two lines addresses posibility of two masks having the same
+            # roi value
+            mask_unique, solutions = four_color_theorem(mask)
+            mask = four_color_to_unique(mask_unique)
+            
+            # plt.title("NO toxo")
+            # plt.imshow(mask)
+            # plt.show()
+            
+            # if has toxo, quantify it inside the cell
+            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
+                mask_toxo = load_image(row_data.mask_toxo)
+                mask_orig = mask
+                mask = mask * np.invert(mask_toxo)
+                # save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\whole_cell_wo_toxo\intermediates")
+                i_toxo = np.clip(tifffile.imread(row_data.toxo_photons), 
+                                                 0, 
+                                                 np.percentile(tifffile.imread(row_data.toxo_photons), 99)
+                                                 )
+                compare_images(tifffile.imread(row_data.nadh_photons), "nadh", 
+                               i_toxo, "toxo", 
+                                suptitle=idx, 
+                                # save_path=save_path / f"{idx}.tiff"
+                                )
+
+                compare_images(mask_orig, "nadh", mask_toxo, "toxo", 
+                                suptitle=idx, 
+                                # save_path=save_path / f"{idx}.tiff"
+                                )
+                compare_images(mask_orig, "nadh", mask, "wo toxo", 
+                                suptitle=idx, 
+                                # save_path=save_path / f"{idx}.tiff"
+                                )
+            else:
+                continue # skip to next image that has toxo
+            
         ######
         
          # visualize_dictionary(idx, row_data)
@@ -125,7 +168,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         # and sometimes missing pixels in mask
         # this aims to try to solve that
         # not a problem for toxo inside vs outside masks
-        if analysis_type != "toxo_inside_vs_outside":
+        if analysis_type != "toxo_inside_vs_outside" and analysis_type != "toxo_inside_cells":
             list_roi_values = list(np.unique(mask))
             list_roi_values.remove(0)
             
@@ -145,7 +188,6 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 pixels = 100
                 temp_mask = remove_small_holes(temp_mask, area_threshold=pixels)
                 mask_edited[temp_mask] = roi_value
-    
     
             if debug:
                 filename = Path(rf"{row_data.mask_cell}")
@@ -190,7 +232,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                                     "perimeter"
                                                     ]) 
         
-        # look for extreme outliers, show image with outliers 
+        # look for extreme outliers and show them
         outliers_found = False
         for r in omi_props:
             pass
@@ -253,21 +295,33 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         # plt.show()
         
         
-        for key_roi in omi_props:
-            pass
-            if omi_props[key_roi]['mask_label'] == 1: # lines 82-83 define these labels
-                omi_props[key_roi]['toxo_location'] = 'inside'
-                
-            elif omi_props[key_roi]['mask_label'] ==2:
-                omi_props[key_roi]['toxo_location'] = 'outside'
         
+        ############ determine percent of toxo in cell
+        if analysis_type == "toxo_inside_cells":
+            for key_roi in omi_props: # iterate through toxo masks 
+                roi_toxo = mask == omi_props[key_roi]['mask_label']
+                roi_cell = mask_orig == omi_props[key_roi]['mask_label']
+                omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
+                # compare_images(roi_cell, "roi_cell", roi_toxo, "roi_toxo", 
+                #         suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
+        
+        ##### Analysis toxo inside vs outside
+        if analysis_type == "toxo_inside_vs_outside":
+            for key_roi in omi_props:
+                pass
+                if omi_props[key_roi]['mask_label'] == 1: # lines 82-83 define these labels
+                    omi_props[key_roi]['toxo_location'] = 'inside'
+                    
+                elif omi_props[key_roi]['mask_label'] == 2:
+                    omi_props[key_roi]['toxo_location'] = 'outside'
+            
         # QUANTIFY TOXO
         ## initialize column of toxo pixels
         for key_roi in omi_props:
             pass
             omi_props[key_roi]["pixels_toxo"] = 0
         
-        ### quantify toxo in cells
+        ### QUANTIFY TOXO IN CELLS -- if toxo exists
         bool_has_toxo = False
         if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
             

@@ -35,7 +35,7 @@ def load_image(path)-> np.ndarray:
         return tifffile.imread(path)
     
     
-def visualize_dictionary(index_name : str, dict_set : dict)-> None:
+def visualize_dictionary(index_name : str, dict_set : dict, save_path : Path = None)-> None:
     ########## plots for visualization
     
     bool_has_toxo = False
@@ -47,7 +47,7 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
 
     fig, ax = plt.subplots(3,5, figsize=(10,5))
     
-    fig.suptitle(f"dataset: {index_name}")
+    fig.suptitle(f"dataset: {index_name}  |  timepoint: {dict_set['time_hours']}")
      
     ax[0,0].imshow(load_image(dict_set["nadh_photons"]))
     ax[0,0].set_axis_off()
@@ -110,4 +110,7 @@ def visualize_dictionary(index_name : str, dict_set : dict)-> None:
     ax[2,3].set_axis_off()
     ax[2,4].set_axis_off()
 
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
     plt.show()

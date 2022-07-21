@@ -49,6 +49,14 @@ for path_dict_dataset in tqdm(list_datasets[:]):
         im_fill_holes = binary_fill_holes(mask_dilated, disk(1))      
         mask_remove_objects = remove_small_objects(im_fill_holes, min_size=30, connectivity=1)
         
+        im_top_percentile = im_clipped > np.percentile(im_clipped,95)
+        # plt.imshow(im_top_percentile)
+        # plt.show()
+        
+        final_mask = np.bitwise_or(mask_remove_objects, im_top_percentile)
+        
+        # compare_images(im_clipped, "original", final_mask, "mask")
+        
         
         # compare_images(np.clip(im, 0, np.percentile(im,99)),"original",
         #                mask_remove_objects, "mask")
@@ -130,5 +138,5 @@ for path_dict_dataset in tqdm(list_datasets[:]):
         #     ax[5].set_axis_off()
         #     plt.show()
             
-        tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", mask_remove_objects)
+        tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", final_mask)
         

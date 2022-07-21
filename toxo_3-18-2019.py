@@ -96,7 +96,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     dict_dataset[handle]["nadh_t2"] = list(filter(re.compile(handle_nadh +  suffixes['t2']).search, list_str_all_files))[0]
     dict_dataset[handle]["nadh_chi"] = list(filter(re.compile(handle_nadh +  suffixes['chi']).search, list_str_all_files))[0]
 
-    # MASKS
+    # MASKSBuilt-in mu
     path_mask_cell = list(filter(re.compile(f".*napari_masks_cell.*{handle_nadh +  suffixes['mask_cell']}").search, list_str_all_files))[0]
     # path_mask_cyto = list(filter(re.compile(handle_nadh +  suffixes['mask_cytoplasm']).search, list_str_all_files))[0]
     # path_mask_nuclei = list(filter(re.compile(handle_nadh +  suffixes['mask_nuclei']).search, list_str_all_files))[0]    
@@ -117,7 +117,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # paths to toxo
     if bool_has_toxo:
         dict_dataset[handle]["toxo_photons"] = list(filter(re.compile(handle_toxo + suffixes['im_toxo']).search, list_str_all_files))[0]
-        dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(handle_toxo + suffixes['mask_toxo']).search, list_str_all_files))[0]
+        dict_dataset[handle]["mask_toxo"] = list(filter(re.compile(f".*generated_toxo_masks.*{handle_toxo + suffixes['mask_toxo']}").search, list_str_all_files))[0]
 
         
     # additional information
@@ -207,9 +207,10 @@ df_dataset_output.index.name = "index"
 df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset.keys())[:3]):
+for row_data in tqdm(list(dict_dataset.keys())[:]):
     pass
-    visualize_dictionary(row_data,dict_dataset[row_data])
+    # save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries\3-18-2019_intermediates")
+    visualize_dictionary(row_data, dict_dataset[row_data])# save_path=(save_path / f"{row_data}.tiff") )
     # 
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
