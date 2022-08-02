@@ -5,7 +5,7 @@ import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
 from tqdm import tqdm
 import pandas as pd
-from helper import load_image, visualize_dictionary
+from helper import load_image, visualize_dictionary, preprocess_mask
 from datetime import date
 import math
 import numpy as np
@@ -22,18 +22,20 @@ path_output_features = path_project / "features"
 
 list_dataset_dicts = list(path_datasets.glob("*.csv"))
 
-# DEFINE ANALYSIS TYPE 
-# analysis_type = "whole_cell"
-# analysis_type = "whole_cell_wo_toxo"
-# analysis_type = "toxo_inside_vs_outside"
-analysis_type = "toxo_inside_cells"
+# DEFINE ANALYSIS TYPE* SEE NOTE BELOW
+# analysis_type = "toxo_inside_cells_high_vs_low"
+# analysis_type = "whole_cell_vs_high_toxo"
+# analysis_type = "high_toxo_cells_vs_outside_toxo" # outside toxo may require it's own script
 
+# NOTE: offloading thresholding to script that creates figures
+# just quantifying here
 
-path_output_features = path_output_features / analysis_type
+# path_output_features = path_output_features
 #%% COMPUTE OMI PARAMETERS
 
 debug = False
 skipped_images = []
+
 # iterate through dictionaries
 for dict_dataset in tqdm(list_dataset_dicts[:]):
     pass
@@ -41,113 +43,15 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     
     print(dict_dataset)
     # itereate through rows of dict
-    for idx, row_data in tqdm(list(df_data.iterrows())[:]):#iterate through sets
+    for idx, row_data in tqdm(list(df_data.iterrows())[:]): # iterate through sets
         pass
-    
-    ###### MODIFY MASKS AS NEEDED DEPENDING ON ANALYSIS 
-        if analysis_type == "whole_cell":
-            mask = load_image(row_data.mask_cell)
-            # plt.title("no toxo")
-            # plt.imshow(mask)
-            # plt.show()
-           
-        # whole cell without toxo -- if has toxo stamp it out
-        elif analysis_type == "whole_cell_wo_toxo": # if maks have a toxo mask, exclude toxo
-            mask = load_image(row_data.mask_cell)
-            plt.title("NO toxo")
-            plt.imshow(mask)
-            plt.show()
-            # if has toxo, remove it
-            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
-                mask_toxo = load_image(row_data.mask_toxo)
-                mask_orig = mask
-                mask = mask * np.invert(mask_toxo)
-                save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\whole_cell_wo_toxo\intermediates")
-                compare_images(mask_orig, "original", mask, "wo toxo", 
-                               suptitle=idx, 
-                               save_path=save_path / f"{idx}.tiff")
-
-                
-        # quantify toxo inside and outside
-        elif analysis_type == "toxo_inside_vs_outside": # compute just toxo extracted from mask
-            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
-                mask_toxo = load_image(row_data.mask_toxo)
-                mask_im = load_image(row_data.mask_cell)
-                
-                
-                # plt.imshow(load_image(row_data.nadh_photons))
-                # plt.imshow(load_image(row_data.toxo_photons))
-                 
-                toxo_in_cell = np.bitwise_and(mask_toxo, mask_im>0 )
-                toxo_outside_cell = mask_toxo * np.invert(toxo_in_cell)
-                
-                
-                mask = np.zeros_like(toxo_in_cell, dtype=np.uint16)
-                mask[toxo_in_cell] = 1 # toxo in cell
-                mask[toxo_outside_cell] = 2 # toxo outside cell
-
-                fig, ax = plt.subplots(1,3)
-                
-                ax[0].set_axis_off()
-                ax[0].set_title('nadh')
-                ax[0].imshow(mask_im)
-                
-                ax[1].set_axis_off()
-                ax[1].set_title('toxo')
-                ax[1].imshow(mask_toxo)
-                
-                ax[2].set_axis_off()
-                ax[2].set_title('combined mask')
-                ax[2].imshow(mask)
-                
-                # plt.title("toxo inside vs outside")
-                # plt.imshow(mask)
-                plt.show()
-                
-            else:
-                continue # skip to next image that has toxo
+            
+        # Relabel whole cell mask
+        mask_cell = load_image(row_data.mask_cell)
+        mask_cell = preprocess_mask(mask_cell, row_data=row_data, debug=False) # see docstring for preprocessing steps
+        # compare_images(nadh_photons, f"original image \n{filename.stem}", mask, "edited mask")
         
-        elif analysis_type == "toxo_inside_cells":
-            mask = load_image(row_data.mask_cell)
-            # these two lines addresses posibility of two masks having the same
-            # roi value
-            mask_unique, solutions = four_color_theorem(mask)
-            mask = four_color_to_unique(mask_unique)
-            
-            # plt.title("NO toxo")
-            # plt.imshow(mask)
-            # plt.show()
-            
-            # if has toxo, quantify it inside the cell
-            if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
-                mask_toxo = load_image(row_data.mask_toxo)
-                mask_orig = mask
-                mask = mask * np.invert(mask_toxo)
-                # save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\whole_cell_wo_toxo\intermediates")
-                i_toxo = np.clip(tifffile.imread(row_data.toxo_photons), 
-                                                 0, 
-                                                 np.percentile(tifffile.imread(row_data.toxo_photons), 99)
-                                                 )
-                compare_images(tifffile.imread(row_data.nadh_photons), "nadh", 
-                               i_toxo, "toxo", 
-                                suptitle=idx, 
-                                # save_path=save_path / f"{idx}.tiff"
-                                )
-
-                compare_images(mask_orig, "nadh", mask_toxo, "toxo", 
-                                suptitle=idx, 
-                                # save_path=save_path / f"{idx}.tiff"
-                                )
-                compare_images(mask_orig, "nadh", mask, "wo toxo", 
-                                suptitle=idx, 
-                                # save_path=save_path / f"{idx}.tiff"
-                                )
-            else:
-                continue # skip to next image that has toxo
-            
-        ######
-        
-         # visualize_dictionary(idx, row_data)
+        # LOAD IMAGES 
         nadh_photons = load_image(row_data.nadh_photons)
         nadh_a1 = load_image(row_data.nadh_a1)
         nadh_a2 = load_image(row_data.nadh_a2)
@@ -162,54 +66,9 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         fad_t2 = load_image(row_data.fad_t2)
         fad_chi = load_image(row_data.fad_chi)
         
-        
-        # PROCESS MASK
-        # Gina's whole cell masks sometimes contain stray pixels 
-        # and sometimes missing pixels in mask
-        # this aims to try to solve that
-        # not a problem for toxo inside vs outside masks
-        if analysis_type != "toxo_inside_vs_outside" and analysis_type != "toxo_inside_cells":
-            list_roi_values = list(np.unique(mask))
-            list_roi_values.remove(0)
-            
-            mask_edited = np.zeros_like(mask)
-            
-            # fill small holes in masks
-            for roi_value in list_roi_values:
-                pass
-                temp_mask = mask == roi_value
-                # remove gaps in masks
-                temp_mask = binary_closing(temp_mask)
-                
-                # remove small objects
-                temp_mask = binary_opening(temp_mask)
-                
-                # remove small objects
-                pixels = 100
-                temp_mask = remove_small_holes(temp_mask, area_threshold=pixels)
-                mask_edited[temp_mask] = roi_value
-    
-            if debug:
-                filename = Path(rf"{row_data.mask_cell}")
-                compare_images(mask, f"original mask \n{filename.stem}", mask_edited, "edited mask")
-                compare_images(nadh_photons, f"original image \n{filename.stem}", mask_edited, "edited mask")
-    
-            
-            mask = mask_edited
-            
-            # this guarantees that rois have a unique value
-            # original masks have some rois with the same value currently
-            mask_unique, solutions = four_color_theorem(mask)
-            mask_unique = four_color_to_unique(mask_unique)
-            if debug:
-                compare_images(mask, "original mask", mask_unique, "after four color relabeling")
-            mask = mask_unique
-        # end fixing Gina's masks
-        
-       
-        
+        # COMPUTE REGIONPROPS
         omi_props = regionprops_omi(idx, 
-                                     label_image = mask, 
+                                     label_image = mask_cell, 
                                      im_nadh_intensity = nadh_photons, 
                                      im_nadh_a1 = nadh_a1, 
                                      im_nadh_a2 = nadh_a2, 
@@ -232,6 +91,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                                     "perimeter"
                                                     ]) 
         
+        ################################# QUALITY CONTROL 
         # look for extreme outliers and show them
         outliers_found = False
         for r in omi_props:
@@ -247,7 +107,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                     ]:
                 # param = "redox_ratio_mean"
                 plt.title(f"{idx} \n{param}")
-                plt.imshow(mask)
+                plt.imshow(mask_cell)
                 for key in omi_props:
                     text = f"{omi_props[key][param]:.3f}"
                     plt.text(omi_props[key]["centroid"][1],
@@ -294,71 +154,71 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         #     ax.add_patch(rect)
         # plt.show()
         
+        ################################# END QUALITY CONTROL
         
-        
-        ############ determine percent of toxo in cell
-        if analysis_type == "toxo_inside_cells":
+        # if toxo mask, determine high_toxo cells
+        if 'toxo' in row_data.treatment:
+           
+            # label toxo according to cell roi value
+            mask_toxo = load_image(row_data.mask_toxo)
+            mask_toxo = mask_cell * mask_toxo
+            
+            # quantify percent toxo in cell
             for key_roi in omi_props: # iterate through toxo masks 
-                roi_toxo = mask == omi_props[key_roi]['mask_label']
-                roi_cell = mask_orig == omi_props[key_roi]['mask_label']
-                omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
+                roi_toxo = mask_toxo == omi_props[key_roi]['mask_label']
+                roi_cell = mask_cell == omi_props[key_roi]['mask_label']
+
+                if roi_toxo.sum() == 0: 
+                    omi_props[key_roi]["percent_toxo"] = 0
+                else:
+                    omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
+                    
                 # compare_images(roi_cell, "roi_cell", roi_toxo, "roi_toxo", 
-                #         suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
-        
-        ##### Analysis toxo inside vs outside
-        if analysis_type == "toxo_inside_vs_outside":
+                #          suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
+        else:
             for key_roi in omi_props:
                 pass
-                if omi_props[key_roi]['mask_label'] == 1: # lines 82-83 define these labels
-                    omi_props[key_roi]['toxo_location'] = 'inside'
-                    
-                elif omi_props[key_roi]['mask_label'] == 2:
-                    omi_props[key_roi]['toxo_location'] = 'outside'
-            
-        # QUANTIFY TOXO
-        ## initialize column of toxo pixels
-        for key_roi in omi_props:
-            pass
-            omi_props[key_roi]["pixels_toxo"] = 0
+                omi_props[key_roi]["percent_toxo"] = 0
+    
         
         ### QUANTIFY TOXO IN CELLS -- if toxo exists
-        bool_has_toxo = False
-        if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
+        # bool_has_toxo = False
+        # if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
             
-            mask_toxo = load_image(row_data.mask_toxo)
-            bool_has_toxo = True
-            mask_cell_toxo_intersection = mask * (mask_toxo > 0) # IoU of toxo/cell
-            list_roi_values = np.unique(mask_cell_toxo_intersection) # roi values with toxo
+        #     mask_toxo = load_image(row_data.mask_toxo)
+        #     bool_has_toxo = True
+        #     mask_cell_toxo_intersection = mask * (mask_toxo > 0) # IoU of toxo/cell
+        #     list_roi_values = np.unique(mask_cell_toxo_intersection) # roi values with toxo
             
-            # visualize toxo
-            # fig, ax = plt.subplots(1,5)
-            # ax[0].imshow(mask)
-            # ax[0].set_title("mask cell")
-            # ax[0].set_axis_off()
-            # ax[1].imshow(mask_toxo > 0)
-            # ax[1].set_title("toxo masks")
-            # ax[1].set_axis_off()
-            # ax[2].imshow(mask_cell_toxo_intersection)
-            # ax[2].set_title("intersection")
-            # ax[2].set_axis_off()
+        #     # visualize toxo
+        #     # fig, ax = plt.subplots(1,5)
+        #     # ax[0].imshow(mask)
+        #     # ax[0].set_title("mask cell")
+        #     # ax[0].set_axis_off()
+        #     # ax[1].imshow(mask_toxo > 0)
+        #     # ax[1].set_title("toxo masks")
+        #     # ax[1].set_axis_off()
+        #     # ax[2].imshow(mask_cell_toxo_intersection)
+        #     # ax[2].set_title("intersection")
+        #     # ax[2].set_axis_off()
             
-            # ax[3].imshow(load_image(row_data.toxo_photons), vmax=30)
-            # ax[3].set_title("toxo photons")
-            # ax[3].set_axis_off()
-            # im_kmeans = kmeans_threshold(load_image(row_data.toxo_photons), k=3, n_brightest_clusters=2)
-            # ax[4].imshow(im_kmeans, vmax=1)
-            # ax[4].set_title("toxo kmeans ")
-            # ax[4].set_axis_off()
-            # plt.show()
+        #     # ax[3].imshow(load_image(row_data.toxo_photons), vmax=30)
+        #     # ax[3].set_title("toxo photons")
+        #     # ax[3].set_axis_off()
+        #     # im_kmeans = kmeans_threshold(load_image(row_data.toxo_photons), k=3, n_brightest_clusters=2)
+        #     # ax[4].imshow(im_kmeans, vmax=1)
+        #     # ax[4].set_title("toxo kmeans ")
+        #     # ax[4].set_axis_off()
+        #     # plt.show()
             
-            for key in omi_props: 
-                if omi_props[key]["mask_label"] in list_roi_values:
-                    omi_props[key]["pixels_toxo"] = np.sum(mask_cell_toxo_intersection == omi_props[key]["mask_label"])
+        #     for key in omi_props: 
+        #         if omi_props[key]["mask_label"] in list_roi_values:
+        #             omi_props[key]["pixels_toxo"] = np.sum(mask_cell_toxo_intersection == omi_props[key]["mask_label"])
          
         ## CREATE DATAFRAME
         df_props = pd.DataFrame(omi_props).transpose()
-        if bool_has_toxo:
-            df_props["pixels_toxo"] = df_props["pixels_toxo"].fillna(0) 
+        # if bool_has_toxo:
+        #     df_props["pixels_toxo"] = df_props["pixels_toxo"].fillna(0) 
         df_props.index.name = "base_name_with_roi"
         
         # save image id
@@ -400,7 +260,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     path_feature_summaries = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
     d = date.today().strftime("%Y_%m_%d")
     df_all_props = df_all_props.set_index('base_name_with_roi', drop=True)
-    df_all_props.to_csv(path_feature_summaries / f"{d}_all_props_{analysis_type}.csv")
+    df_all_props.to_csv(path_feature_summaries / f"{d}_all_props_cells.csv")
     
 #%% PLOT VALUES WITH LARGE MEDIAN CHI SQUARED
 

@@ -9,6 +9,15 @@ import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
 import math
 
+from skimage.morphology import (disk, 
+                                binary_closing, 
+                                binary_opening, 
+                                remove_small_objects,
+                                remove_small_holes,
+                                label)
+
+from flim_tools.visualization import compare_images
+from flim_tools.image_processing import four_color_theorem, four_color_to_unique
 
 def load_image(path)-> np.ndarray:
     """
@@ -114,3 +123,69 @@ def visualize_dictionary(index_name : str, dict_set : dict, save_path : Path = N
     if save_path:
         plt.savefig(save_path, bbox_inches='tight')
     plt.show()
+    
+    
+def preprocess_mask(mask, row_data, pixels = 100, debug=False):
+    
+    # PROCESS MASK
+    # Gina's whole cell masks sometimes contain stray pixels 
+    # and sometimes missing pixels in mask
+    # this tries to remove those pixels and fill in the rest
+    
+    # this guarantees that rois have a unique value
+    # original masks have some rois with the same value currently
+    mask_original = mask.copy()
+    mask_unique, solutions = four_color_theorem(mask)
+    mask = four_color_to_unique(mask_unique)
+    
+    list_roi_values = list(np.unique(mask))
+    list_roi_values.remove(0)
+    
+    mask_edited = np.zeros_like(mask)
+    
+    # fill small holes in masks
+    for roi_value in list_roi_values:
+        pass
+        temp_mask = mask == roi_value
+               
+        # remove gaps in masks
+        temp_mask = binary_closing(temp_mask)
+        
+        # remove small objects
+        temp_mask = binary_opening(temp_mask)
+        
+        # if roi_value == 11:
+        #     print('stop')
+        # remove small objects
+        pixels = 100
+        temp_mask = remove_small_holes(temp_mask, area_threshold=pixels)
+        temp_mask = remove_small_objects(temp_mask, min_size=pixels)
+        mask_edited[temp_mask] = roi_value
+        
+
+    mask = mask_edited
+
+    if debug:
+        filename = Path(rf"{row_data.mask_cell}")
+        compare_images(mask_original, f"original mask \n{filename.stem}", mask_edited, "processed mask")
+    
+    return mask
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
