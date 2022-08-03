@@ -124,7 +124,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 print(f"skipping exporting outliers: {idx}")
                 skipped_images.append(idx)
             continue
-            
+                
         # quality control for rois  
         # chi square mean above 1.5 should be looked at
         
