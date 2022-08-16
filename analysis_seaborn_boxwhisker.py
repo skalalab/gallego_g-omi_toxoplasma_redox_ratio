@@ -3,7 +3,7 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pylab as plt
 from natsort import natsorted
-from flim_tools.io import read_asc
+from cell_analysis_tools.io import read_asc
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"]=300
 from pathlib import Path
@@ -209,7 +209,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     data = data.astype({"time_hours" : str})
     
     ## threshold df by percent_toxo here
-    threshold_percent_toxo = 0.1
+    threshold_percent_toxo = 0.05
     
     # data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
     

@@ -1,5 +1,5 @@
 from pathlib import Path
-from flim_tools.flim import regionprops_omi
+from cell_analysis_tools.flim import regionprops_omi
 import matplotlib.pylab as plt
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"] = 300
@@ -9,9 +9,9 @@ from helper import load_image, visualize_dictionary, preprocess_mask
 from datetime import date
 import math
 import numpy as np
-from flim_tools.image_processing import kmeans_threshold, four_color_theorem, four_color_to_unique
-from flim_tools.metrics import percent_content_captured
-from flim_tools.visualization import compare_images
+from cell_analysis_tools.image_processing import kmeans_threshold, four_color_theorem, four_color_to_unique
+from cell_analysis_tools.metrics import percent_content_captured
+from cell_analysis_tools.visualization import compare_images
 from natsort import natsorted
 import tifffile
 from skimage.morphology import binary_closing, remove_small_holes, binary_opening

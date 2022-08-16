@@ -1,4 +1,4 @@
-from flim_tools.io import read_asc
+from cell_analysis_tools.io import read_asc
 from pathlib import Path
 import pathlib
 import tifffile
@@ -16,8 +16,8 @@ from skimage.morphology import (disk,
                                 remove_small_holes,
                                 label)
 
-from flim_tools.visualization import compare_images
-from flim_tools.image_processing import four_color_theorem, four_color_to_unique
+from cell_analysis_tools.visualization import compare_images
+from cell_analysis_tools.image_processing import four_color_theorem, four_color_to_unique
 
 def load_image(path)-> np.ndarray:
     """
