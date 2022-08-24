@@ -5,19 +5,21 @@ import matplotlib.pylab as plt
 import numpy as np
 from skimage import filters
 
-from flim_tools.image_processing import kmeans_threshold
 from sklearn.preprocessing import RobustScaler
 from scipy.ndimage import binary_fill_holes
 from skimage.filters import gaussian
 from tqdm import tqdm
 
-path_dicts = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries")
-list_datasets = list(path_dicts.glob("*.csv"))
 from skimage.morphology import white_tophat, disk, binary_closing, octagon, remove_small_objects
 
-from flim_tools.visualization import compare_images
-
+from cell_analysis_tools.image_processing import kmeans_threshold
+from cell_analysis_tools.visualization import compare_images
 #%%
+
+
+path_dicts = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries")
+list_datasets = list(path_dicts.glob("*.csv"))
+
 for path_dict_dataset in tqdm(list_datasets[:]):
     pass
 
@@ -42,7 +44,6 @@ for path_dict_dataset in tqdm(list_datasets[:]):
     for index, row_data in tqdm(list(df_dataset_toxo.iterrows())[:]):
         pass
         im = tifffile.imread(row_data['toxo_photons']) # 
-        # im_med = filters.median(im)
         im_clipped = np.clip(im, 0, np.percentile(im,99))
         im_clipped_bottom = np.clip(im_clipped, np.percentile(im_clipped,90), np.max(im_clipped))
         mask_dilated = binary_closing(im_clipped_bottom > np.min(im_clipped_bottom), octagon(1,1))
@@ -55,7 +56,7 @@ for path_dict_dataset in tqdm(list_datasets[:]):
         
         final_mask = np.bitwise_or(mask_remove_objects, im_top_percentile)
         
-        # compare_images(im_clipped, "original", final_mask, "mask")
+        compare_images(im_clipped, "original", final_mask, "mask")
         
         
         # compare_images(np.clip(im, 0, np.percentile(im,99)),"original",
@@ -138,5 +139,6 @@ for path_dict_dataset in tqdm(list_datasets[:]):
         #     ax[5].set_axis_off()
         #     plt.show()
             
-        tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", final_mask)
+        # save masks
+        # tifffile.imwrite(path_output / f"{Path(row_data['toxo_photons']).stem}_mask_toxo.tiff", final_mask)
         

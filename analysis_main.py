@@ -45,11 +45,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]): # iterate through sets
         pass
-            
+    
+        # only look at media nad media+toxo experiments
+        if row_data.treatment not in ["media", "media+toxo"]:
+            continue
+        
         # Relabel whole cell mask
         mask_cell = load_image(row_data.mask_cell)
         mask_cell = preprocess_mask(mask_cell, row_data=row_data, debug=False) # see docstring for preprocessing steps
-        # compare_images(nadh_photons, f"original image \n{filename.stem}", mask, "edited mask")
         
         # LOAD IMAGES 
         nadh_photons = load_image(row_data.nadh_photons)
@@ -65,6 +68,10 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         fad_t1 = load_image(row_data.fad_t1)
         fad_t2 = load_image(row_data.fad_t2)
         fad_chi = load_image(row_data.fad_chi)
+        
+        # VISUALIZE INTENSITY AND MASK
+        # compare_images(nadh_photons, f"original image \n{Path(row_data.nadh_photons).name}", mask_cell, " mask")
+
         
         # COMPUTE REGIONPROPS
         omi_props = regionprops_omi(idx, 
@@ -163,6 +170,10 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
             mask_toxo = load_image(row_data.mask_toxo)
             mask_toxo = mask_cell * mask_toxo
             
+            plt.title("toxo mask")
+            # plt.imshow(mask_toxo)
+            # plt.show()
+            
             # quantify percent toxo in cell
             for key_roi in omi_props: # iterate through toxo masks 
                 roi_toxo = mask_toxo == omi_props[key_roi]['mask_label']
@@ -173,47 +184,15 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 else:
                     omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
                     
+                # VISUALIZE TOXO 
                 # compare_images(roi_cell, "roi_cell", roi_toxo, "roi_toxo", 
-                #          suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
+                #           suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
         else:
             for key_roi in omi_props:
                 pass
                 omi_props[key_roi]["percent_toxo"] = 0
     
         
-        ### QUANTIFY TOXO IN CELLS -- if toxo exists
-        # bool_has_toxo = False
-        # if isinstance(row_data.mask_toxo, str) and Path(row_data.mask_toxo).exists():
-            
-        #     mask_toxo = load_image(row_data.mask_toxo)
-        #     bool_has_toxo = True
-        #     mask_cell_toxo_intersection = mask * (mask_toxo > 0) # IoU of toxo/cell
-        #     list_roi_values = np.unique(mask_cell_toxo_intersection) # roi values with toxo
-            
-        #     # visualize toxo
-        #     # fig, ax = plt.subplots(1,5)
-        #     # ax[0].imshow(mask)
-        #     # ax[0].set_title("mask cell")
-        #     # ax[0].set_axis_off()
-        #     # ax[1].imshow(mask_toxo > 0)
-        #     # ax[1].set_title("toxo masks")
-        #     # ax[1].set_axis_off()
-        #     # ax[2].imshow(mask_cell_toxo_intersection)
-        #     # ax[2].set_title("intersection")
-        #     # ax[2].set_axis_off()
-            
-        #     # ax[3].imshow(load_image(row_data.toxo_photons), vmax=30)
-        #     # ax[3].set_title("toxo photons")
-        #     # ax[3].set_axis_off()
-        #     # im_kmeans = kmeans_threshold(load_image(row_data.toxo_photons), k=3, n_brightest_clusters=2)
-        #     # ax[4].imshow(im_kmeans, vmax=1)
-        #     # ax[4].set_title("toxo kmeans ")
-        #     # ax[4].set_axis_off()
-        #     # plt.show()
-            
-        #     for key in omi_props: 
-        #         if omi_props[key]["mask_label"] in list_roi_values:
-        #             omi_props[key]["pixels_toxo"] = np.sum(mask_cell_toxo_intersection == omi_props[key]["mask_label"])
          
         ## CREATE DATAFRAME
         df_props = pd.DataFrame(omi_props).transpose()

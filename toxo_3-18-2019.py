@@ -1,6 +1,8 @@
 from pathlib import Path
-from flim_tools.flim import regionprops_omi
-from flim_tools.io import read_asc
+
+from cell_analysis_tools.flim import regionprops_omi
+from cell_analysis_tools.io import read_asc
+
 import pandas as pd
 from tqdm import tqdm
 import re

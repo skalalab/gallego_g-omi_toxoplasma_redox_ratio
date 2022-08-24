@@ -46,7 +46,7 @@ pixels_rr_normalized = np.zeros(1,)
 
 
 # iterate through dictionaries
-for dict_dataset in tqdm(list_dataset_dicts[:]):
+for dict_dataset in tqdm(list_dataset_dicts[1:]):
     pass
     df_data = pd.read_csv(dict_dataset, index_col=("index"))
     
