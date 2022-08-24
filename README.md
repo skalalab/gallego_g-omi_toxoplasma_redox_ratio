@@ -3,18 +3,22 @@
 Analysis code for this article is found here. It contains all files that were used to load the data, do the analysis and generate the figures. 
 
 <hr>
+
 ### Dependencies and System Requirements
 
-cell-analysis-tools == 0.0.5
-matplotlib == 3.4.3
-tqdm == 4.62.3
-pandas == 1.3.4
-numpy == 1.20.3
-natsort == 8.1.0
-skimage == 0.18.3
-tifffile ==2021.7.2
+* cell-analysis-tools == 0.0.5
+* matplotlib == 3.4.3
+* tqdm == 4.62.3
+* pandas == 1.3.4
+* numpy == 1.20.3
+* natsort == 8.1.0
+* skimage == 0.18.3
+* tifffile ==2021.7.2
+
+The computation was done on a pc with Windows 10, i7-770k 64GB RAM, although the code should work on any computer with significantly lower specs.
 
 <hr>
+
 ### How to run the code
 
 To run the code it is suggested that you create a conda environment and install the necessary dependencies there. 
@@ -38,6 +42,7 @@ To run the code it is suggested that you create a conda environment and install 
 To recreate the findings you will need a copy of the data, you can then run the two scripts that generate csv files to all the images **toxo_3-18-2019.py** and  **toxo_3-18-2019.py**, from there you can run the **analysis_main.py** script to perform feature extraction and save results in a csv file. Lastly run the cells in **analysis_seaborn_boxwhisker.py** to generate plots.
 
 <hr>
+
 ### Special notes/instructions
 
 * Images and data are available upon request 
