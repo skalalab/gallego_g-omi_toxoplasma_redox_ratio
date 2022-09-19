@@ -59,6 +59,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # generate image handles 
     handle_nadh = base_name + str(int(row_data.nadh)).zfill(3)
     
+    # 4-6-2019
     # one or more images missing, skipping row 
     # nadh_photons : 'Cells-001_photons .tif'
     # mask_cell : 'Cells-219_photons _cells.tif'
@@ -207,9 +208,13 @@ df_output_dataset.index.name = "index"
 df_output_dataset.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset)[:]):
+for row_data in tqdm(list(dict_dataset)[:2]):
     pass
     visualize_dictionary(row_data,dict_dataset[row_data])
+    
+    
+    # im = tifffile.imread((dict_dataset[row_data]['toxo_photons']))
+    # plt.imshow(np.clip(im,0, np.percentile(im, 99)))
         
     # 
     # #paths to toxo masks

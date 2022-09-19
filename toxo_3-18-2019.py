@@ -47,9 +47,6 @@ suffixes = {
 #%% load dataset 
 base_name = "Cells-"
 
-# "".zfill(3)
-
-
 dict_dataset = {}
 
 for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
@@ -70,7 +67,7 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     # mask_cell : 'Cells-030_photons _cells.tiff'
     # mask_cell : 'Cells-070_photons _cells.tiff'
     # mask_toxo : 'Cells-105_Cycle00001_Ch1_000001.ome_toxo.tiff'
-    # mak_cell: : 'Cells-133_photons _cells.tiff'
+    # mask_cell: : 'Cells-133_photons _cells.tiff'
     if  handle_nadh == 'Cells-007' or \
         handle_nadh == 'Cells-005' or \
         handle_nadh == 'Cells-070' or \
@@ -206,14 +203,21 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
 df_dataset_output = pd.DataFrame(dict_dataset).transpose()
 df_dataset_output.index.name = "index"
-df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
+# df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset.keys())[:]):
+for row_data in tqdm(list(dict_dataset.keys())[:2]):
     pass
     # save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries\3-18-2019_intermediates")
+    
+    # if 'toxo' in dict_dataset[row_data]['treatment']:
+    #     im = tifffile.imread(dict_dataset[row_data]['toxo_photons'])
+    #     plt.imshow(np.clip(im,0,np.percentile(im, 99)))
+    #     plt.show()
+        
     visualize_dictionary(row_data, dict_dataset[row_data])# save_path=(save_path / f"{row_data}.tiff") )
-    # 
+
+    
     # #paths to toxo masks
     # path_masks_toxo = path_dataset / "masks_toxo" / "TIFF"
     # list_path_masks_toxo = list(path_masks_toxo.glob("*.tiff"))

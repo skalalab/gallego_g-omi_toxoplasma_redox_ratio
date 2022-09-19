@@ -18,7 +18,11 @@ path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
 df_data = pd.read_csv(path_all_features)
 
-df_data = df_data[(df_data['time_hours'] != 3) & (df_data['time_hours'] != 72) ]
+df_data = df_data[(df_data['time_hours'] != 3) &
+                  (df_data['time_hours'] != 72) 
+                  # (df_data['time_hours'] != 48) & 
+                  # (df_data['treatment'].isin(['media', 'media+toxo']) )
+                      ]
 
 ###
 # df_toxo = df_data[(df_data['treatment']=='media+toxo')]
@@ -56,7 +60,10 @@ for experiment in np.unique(df_data['experiment']):
     ##%% PLOT PERCENT TOXO CAPTURED -- ALL IN ONE FIGURE
     for timepoint in np.unique(df_data['time_hours']):
         pass
-        df_data_subset = df_data[(df_data['time_hours']==timepoint) & (df_data['experiment']==experiment)]
+        df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
+                                 (df_data['experiment']==experiment) &
+                                 (df_data['treatment']=='media+toxo') ## only for media+toxo
+                                 ]
         plt.hist(df_data_subset['percent_toxo'], histtype='step', bins=20, label=timepoint)
     plt.title(f"Percent toxo captured per timepoint \nexperiment: {experiment}")
     plt.legend()
@@ -66,7 +73,10 @@ for experiment in np.unique(df_data['experiment']):
     ##%% PLOT PERCENT CAPTURED -- ONE FIGURE PER TIMEPOINT per experiment
     for timepoint in np.unique(df_data['time_hours']):
         pass
-        df_data_subset = df_data[(df_data['time_hours']==timepoint) & (df_data['experiment']==experiment)]
+        df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
+                                 (df_data['experiment']==experiment) &
+                                 (df_data['treatment']=='media+toxo')
+                                 ]
         #proplot
         fig = pplt.figure()
         ax = fig.add_subplot()
@@ -77,6 +87,22 @@ for experiment in np.unique(df_data['experiment']):
                   )
         plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.png", bbox_inches='tight')
         plt.show()
+
+    
+##%% TOXO CONDITION --> LOW VS HIGH TOXO  -- TOXO CONTENT,  ALL EXPERIMENTS BY TIMEPOINT
+
+for timepoint in np.unique(df_data['time_hours']):
+     pass
+     df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
+                              (df_data['treatment']=='media+toxo') ## only for media+toxo
+                              ]
+     plt.hist(df_data_subset['percent_toxo'], histtype='step', bins=20, label=timepoint)
+plt.title(f"Percent Toxo Captured Per Timepoint \nAll Experiments")
+plt.xlabel("Percent toxoplasma in cell")
+plt.ylabel("Count Cells")
+plt.legend()
+plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.png", bbox_inches='tight')
+plt.show()
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
 
@@ -95,7 +121,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     data = data.astype({"time_hours" : str})
     
     ## threshold df by percent_toxo here
-    threshold_percent_toxo = 0.1
+    threshold_percent_toxo = 0.05
     
     # data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
     
@@ -144,6 +170,9 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
+# all conditions if not just media and media+toxo
+bool_all_conditions = False
+
 p_values = "ns: p <= 1 | "\
            "*: .01 < p <= .05  | "\
            "**: .001 < p <= .01  | "\
@@ -153,21 +182,48 @@ p_values = "ns: p <= 1 | "\
 mpl.rcParams['figure.figsize'] = 11.7,8.27
 for dict_key in LIST_OMI_PARAMETERS:
     pass
-    palette ={"media": '#1690FF', "media+toxo": '#FC5353'}
-
-    data = df_data[df_data['treatment'].isin(['media','media+toxo'])]
+    
+    # ALL  CONDITIONS
+    if bool_all_conditions:
+        palette ={"media": '#1690FF', "media+toxo": '#FC5353', 'media+inhibitor' : '#a83dc2', 'media+inhibitor+toxo' : '#1ad2e5'}
+        data = df_data[df_data['treatment'].isin(['media','media+toxo','media+inhibitor','media+inhibitor+toxo'])]
+    else:
+        #####
+        # TWO CONDITIONS
+        palette ={"media": '#1690FF', "media+toxo": '#FC5353'}
+        data = df_data[df_data['treatment'].isin(['media','media+toxo'])]
+        
     data = data.astype({"time_hours" : str})
     
-    ## threshold df by percent_toxo here
-    threshold_percent_toxo = 0.1
-    data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
+    ##### COMMENT IN/OUT NUM CONDITIONS
+    ## threshold df by percent_toxo here -- TWO CONDITIONS
+    # threshold_percent_toxo = 0.05
+    # data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
     
+    # ## threshold df by percent_toxo here ALL CONDITIONS
+    threshold_percent_toxo = 0.05
+    data = data.drop(data[
+                    (data['treatment'].isin(['media+toxo','media+inhibitor+toxo'])) &
+                    (data['percent_toxo'] < threshold_percent_toxo)
+                    ].index)
+    ##### 
+    
+    #####
     x = "time_hours"
     y = LIST_OMI_PARAMETERS[dict_key]
     hue = "treatment"
-    hue_order=['media','media+toxo']
+    if bool_all_conditions:
+        hue_order=['media','media+toxo', 'media+inhibitor', 'media+inhibitor+toxo'] # ALL CONDITIONS
+    else:
+        hue_order=['media','media+toxo'] # TWO CONDITIONS 
     order = list(map(str,np.unique(df_data['time_hours'])))
+    
+    # FOR STATANNOTATIONS
     pairs=[((str(x) , 'media'), (str(x),'media+toxo')) for x in np.unique(df_data["time_hours"]) ]
+    
+    if bool_all_conditions:
+        pairs_inhibitor=[((str(x) , 'media+inhibitor'), (str(x),'media+inhibitor+toxo')) for x in np.unique(df_data["time_hours"]) ]
+        pairs += pairs_inhibitor
     
     ############ NORMALIZE REDOX RATIO AND OTHER PARAMETERS TO CONTROL 
     data_normalized_to_control = data.copy()
@@ -176,7 +232,8 @@ for dict_key in LIST_OMI_PARAMETERS:
         for tp in np.unique(data['time_hours']):
             pass
             values_name = LIST_OMI_PARAMETERS[dict_key]
-            control_data_for_timepoint = data[(data['time_hours'] == tp) & (data['treatment'] == 'media')][values_name]
+            control_data_for_timepoint = data[(data['time_hours'] == tp) & 
+                                              (data['treatment'] == 'media')][values_name]
             control_mean = control_data_for_timepoint.mean()
             
             data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp,values_name] -= control_mean
@@ -207,8 +264,12 @@ for dict_key in LIST_OMI_PARAMETERS:
     annotator.configure(test='t-test_ind', text_format='star', loc='inside')
     annotator.apply_and_annotate()
 
-    # Finally save fig    
-    plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.png", bbox_inches='tight')
+    # Finally save fig
+    if bool_all_conditions:
+        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.png", bbox_inches='tight')   
+    else:
+        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.png", bbox_inches='tight')
+
     plt.show()
 
 #%% MEDIA VS MEDIA+TOXO - BY EXPERIMENTS
@@ -286,8 +347,8 @@ for experiment in np.unique(df_data['experiment']):
 
 
 #%% TOXO CONDITION --> HIGH TOXO CELLS VS EXTERNAL TOXO
-analysis_type = 'high_toxo_cells_vs_outside_toxo'
-path_output_figures = path_project / "figures" / analysis_type / "seaborn"
+# analysis_type = 'high_toxo_cells_vs_outside_toxo'
+# path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
 
 

@@ -47,8 +47,9 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         pass
     
         # only look at media nad media+toxo experiments
-        if row_data.treatment not in ["media", "media+toxo"]:
-            continue
+        # if row_data.treatment not in ["media", "media+toxo"]:
+        #     print(f"skipped: {row_data.treatment}")
+        #     continue
         
         # Relabel whole cell mask
         mask_cell = load_image(row_data.mask_cell)
@@ -70,7 +71,11 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         fad_chi = load_image(row_data.fad_chi)
         
         # VISUALIZE INTENSITY AND MASK
-        # compare_images(nadh_photons, f"original image \n{Path(row_data.nadh_photons).name}", mask_cell, " mask")
+        if debug:
+            suptitle = f"{idx} \n{Path(row_data.nadh_photons).name}  |  {row_data.treatment}  |  {row_data.time_hours} hrs"
+            compare_images(nadh_photons, f"original image",
+                           mask_cell, " mask",
+                           suptitle=suptitle)
 
         
         # COMPUTE REGIONPROPS
@@ -99,7 +104,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                                                     ]) 
         
         ################################# QUALITY CONTROL 
-        # look for extreme outliers and show them
+        # look for bad fits based on chi squared
+        # plot and then skip them
         outliers_found = False
         for r in omi_props:
             pass
@@ -132,35 +138,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 skipped_images.append(idx)
             continue
                 
-        # quality control for rois  
-        # chi square mean above 1.5 should be looked at
-        
-        # look for ROIs with 
-        # import matplotlib.patches as mpatches
-        # label_image = mask_cell
-        # param = "label"
-        # fig, ax = plt.subplots()
-        # ax.set_title(param)
-        # ax.imshow(label_image)
-        # for region in omi_props:
-        #     pass
-        #     text = f"{region[param]}"
-        #     ax.text(region["centroid"][1],
-        #              region["centroid"][0],
-        #              text,
-        #              c="w")
-        #     ax.plot(region["centroid"][1],
-        #              region["centroid"][0],
-        #              marker='o',
-        #              markersize=5,
-        #              c="w")
-            
-        #     minr, minc, maxr, maxc = region.bbox
-        #     rect = mpatches.Rectangle((minc, minr), maxc - minc, maxr - minr,
-        #                       fill=False, edgecolor='red', linewidth=2)
-        #     ax.add_patch(rect)
-        # plt.show()
-        
+
         ################################# END QUALITY CONTROL
         
         # if toxo mask, determine high_toxo cells
@@ -169,11 +147,14 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
             # label toxo according to cell roi value
             mask_toxo = load_image(row_data.mask_toxo)
             mask_toxo = mask_cell * mask_toxo
-            
-            plt.title("toxo mask")
-            # plt.imshow(mask_toxo)
-            # plt.show()
-            
+             
+            if debug:
+                    
+                compare_images( nadh_photons, 
+                               f"original image  ",
+                               mask_toxo, "mask toxo",
+                               suptitle=suptitle)
+
             # quantify percent toxo in cell
             for key_roi in omi_props: # iterate through toxo masks 
                 roi_toxo = mask_toxo == omi_props[key_roi]['mask_label']
@@ -184,33 +165,29 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                 else:
                     omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
                     
-                # VISUALIZE TOXO 
+                # VISUALIZE TOXO PER ROI -- use for debugging
                 # compare_images(roi_cell, "roi_cell", roi_toxo, "roi_toxo", 
                 #           suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
+        
+        # if this image doesn't contain toxo then fill values with 0
         else:
             for key_roi in omi_props:
                 pass
                 omi_props[key_roi]["percent_toxo"] = 0
     
-        
-         
         ## CREATE DATAFRAME
         df_props = pd.DataFrame(omi_props).transpose()
-        # if bool_has_toxo:
-        #     df_props["pixels_toxo"] = df_props["pixels_toxo"].fillna(0) 
         df_props.index.name = "base_name_with_roi"
         
         # save image id
         df_props["image_set"] = idx # * len(df_props)
 
-        
         ## add other dictionary data to df
         for item_key in row_data.keys():
             pass
             df_props[item_key] = row_data[item_key]
 
-        df_props.to_csv(path_output_features / f"{idx}.csv")  
-
+        # df_props.to_csv(path_output_features / f"{idx}.csv")  
 
 #%% CREATE ONE CSV 
  
@@ -303,17 +280,3 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
 #     plt.show()
 
 #%%
-
-# import tifffile
-
-# p_chi = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\Cells-005_chi.asc")
-# p_nadh = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\040619\Cells-005\Cells-005_Cycle00001_Ch2_000001.ome.tif")
-# im_chi = load_image(p_chi)
-# im = load_image(p_nadh) 
-# p_mask = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\4-6-2019\040619_Katie_SPC\napari_masks_cell\Cells-005_photons _cells.tiff")
-# mask = load_image(p_mask)
-# plt.imshow(mask)
-# for r in np.unique(mask):
-#     plt.imshow(mask == r)
-#     plt.show()
-# plt.imshow(np.clip(im_chi, 0 , np.percentile(im_chi, 99))) 
