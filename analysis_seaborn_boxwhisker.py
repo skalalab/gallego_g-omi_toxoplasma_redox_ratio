@@ -12,7 +12,7 @@ from statannotations.Annotator import Annotator
 from sklearn import preprocessing
 from itertools import combinations
 import natsort
-import proplot as pplt
+# import proplot as pplt
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
@@ -77,14 +77,12 @@ for experiment in np.unique(df_data['experiment']):
                                  (df_data['experiment']==experiment) &
                                  (df_data['treatment']=='media+toxo')
                                  ]
-        #proplot
-        fig = pplt.figure()
-        ax = fig.add_subplot()
+        #plot
+        fig, ax = plt.subplots(1,1, figsize=(10,10))
+        fig.suptitle(f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}")
         ax.hist(df_data_subset['percent_toxo'], histtype='step', bins=20)
-        ax.format(suptitle=f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}",
-                  xlabel='percent toxo', 
-                  ylabel='cell count',
-                  )
+        ax.xlabel='percent toxo'
+        ax.ylabel='cell count'
         plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.png", bbox_inches='tight')
         plt.show()
 

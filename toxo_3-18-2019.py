@@ -200,13 +200,12 @@ for idx, row_data in tqdm(list(df_dataset.iterrows())[:]):
     
 ##%%
 
-    
 df_dataset_output = pd.DataFrame(dict_dataset).transpose()
 df_dataset_output.index.name = "index"
 # df_dataset_output.to_csv(path_output / f"{Path(path_excel).stem}.csv")
 
 #%%
-for row_data in tqdm(list(dict_dataset.keys())[:2]):
+for row_data in tqdm(list(dict_dataset.keys())[10:11]):
     pass
     # save_path = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries\3-18-2019_intermediates")
     
@@ -214,6 +213,15 @@ for row_data in tqdm(list(dict_dataset.keys())[:2]):
     #     im = tifffile.imread(dict_dataset[row_data]['toxo_photons'])
     #     plt.imshow(np.clip(im,0,np.percentile(im, 99)))
     #     plt.show()
+    
+    path_im_figure = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\images")
+    
+    
+    list_files_to_save = ['nadh_photons', 'fad_photons', 'toxo_photons']
+    for file_key in list_files_to_save:
+        pass
+        file_path = dict_dataset[row_data][file_key] 
+        tifffile.imwrite(path_im_figure / f"{row_data}_{file_key}.tiff" , load_image(file_path))
         
     visualize_dictionary(row_data, dict_dataset[row_data])# save_path=(save_path / f"{row_data}.tiff") )
 
