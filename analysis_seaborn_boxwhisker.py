@@ -18,6 +18,9 @@ from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 
 from tqdm import tqdm
 # import proplot as pplt
+
+output_format = 'png'
+# output_format = 'svg'
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
@@ -77,7 +80,7 @@ for experiment in np.unique(df_data['experiment']):
     plt.xlim(0,100)
     plt.xlabel("Percent toxoplasma in cell")
     plt.ylabel("Cell Count")
-    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.svg", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.{output_format}", bbox_inches='tight')
     plt.show()
     
     ##%% PLOT PERCENT CAPTURED -- ONE FIGURE PER TIMEPOINT per experiment
@@ -96,7 +99,7 @@ for experiment in np.unique(df_data['experiment']):
         plt.locator_params(nbins=10)
         plt.xlim(0,100)
         plt.grid()
-        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.svg", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.{output_format}", bbox_inches='tight')
         plt.show()
 
     
@@ -115,7 +118,7 @@ plt.grid()
 plt.legend()
 plt.locator_params(nbins=10)
 plt.xlim(0,100)
-plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.svg", bbox_inches='tight')
+plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.{output_format}", bbox_inches='tight')
 plt.show()
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
@@ -175,7 +178,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     annotator.apply_and_annotate()
 
     # Finally save fig    
-    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.svg", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
     plt.show()
 
 #%% CONTROL VS HIGH TOXO CELLS
@@ -295,9 +298,9 @@ for dict_key in LIST_OMI_PARAMETERS:
 
     # Finally save fig
     if bool_all_conditions:
-        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.svg", bbox_inches='tight')   
+        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.{output_format}", bbox_inches='tight')   
     else:
-        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.svg", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.{output_format}", bbox_inches='tight')
 
     plt.show()
 
@@ -369,7 +372,7 @@ for experiment in np.unique(df_data['experiment']):
         # annotator.apply_and_annotate()
     
         # Finally save fig    
-        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}.svg", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}.{output_format}", bbox_inches='tight')
         plt.show()
         # plt.close()
 
