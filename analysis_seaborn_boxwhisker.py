@@ -12,6 +12,8 @@ from statannotations.Annotator import Annotator
 from sklearn import preprocessing
 from itertools import combinations
 import natsort
+
+from tqdm import tqdm
 # import proplot as pplt
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
@@ -64,10 +66,11 @@ for experiment in np.unique(df_data['experiment']):
                                  (df_data['experiment']==experiment) &
                                  (df_data['treatment']=='media+toxo') ## only for media+toxo
                                  ]
-        plt.hist(df_data_subset['percent_toxo'], histtype='step', bins=20, label=timepoint)
+        plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
     plt.title(f"Percent toxo captured per timepoint \nexperiment: {experiment}")
     plt.legend()
-    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.png", bbox_inches='tight')
+    plt.grid()
+    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.svg", bbox_inches='tight')
     plt.show()
     
     ##%% PLOT PERCENT CAPTURED -- ONE FIGURE PER TIMEPOINT per experiment
@@ -80,10 +83,11 @@ for experiment in np.unique(df_data['experiment']):
         #plot
         fig, ax = plt.subplots(1,1, figsize=(10,10))
         fig.suptitle(f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}")
-        ax.hist(df_data_subset['percent_toxo'], histtype='step', bins=20)
+        ax.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20)
         ax.xlabel='percent toxo'
         ax.ylabel='cell count'
-        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.png", bbox_inches='tight')
+        plt.grid()
+        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.svg", bbox_inches='tight')
         plt.show()
 
     
@@ -94,12 +98,13 @@ for timepoint in np.unique(df_data['time_hours']):
      df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
                               (df_data['treatment']=='media+toxo') ## only for media+toxo
                               ]
-     plt.hist(df_data_subset['percent_toxo'], histtype='step', bins=20, label=timepoint)
+     plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
 plt.title(f"Percent Toxo Captured Per Timepoint \nAll Experiments")
 plt.xlabel("Percent toxoplasma in cell")
 plt.ylabel("Count Cells")
+plt.grid()
 plt.legend()
-plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.png", bbox_inches='tight')
+plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.svg", bbox_inches='tight')
 plt.show()
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
@@ -134,14 +139,14 @@ for dict_key in LIST_OMI_PARAMETERS:
     pairs=[((str(x) , 'low_toxo'), (str(x),'high_toxo')) for x in np.unique(df_data["time_hours"]) ]
         
     ax = sns.boxplot(
-                    x=x, 
+                    x=x,
                     y=y, 
                     hue=hue, 
                     data=data,
                     palette=palette, 
                     hue_order=hue_order,
                     order=order,
-                )
+                )    
     figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD) \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}" \
         if dict_key == "Redox Ratio" else f"{dict_key} \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}"
     plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
@@ -149,7 +154,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     plt.ylabel(dict_key)
     if dict_key == "Redox Ratio":
         plt.ylim((0,1))
-    plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
+    plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0, title="Conditions")
     plt.tight_layout()
     # plt.show()
 
@@ -159,10 +164,13 @@ for dict_key in LIST_OMI_PARAMETERS:
     annotator.apply_and_annotate()
 
     # Finally save fig    
-    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.png", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.svg", bbox_inches='tight')
     plt.show()
 
 #%% CONTROL VS HIGH TOXO CELLS
+
+#TODO
+
 analysis_type = 'whole_cell_vs_high_toxo'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
@@ -204,8 +212,20 @@ for dict_key in LIST_OMI_PARAMETERS:
                     (data['treatment'].isin(['media+toxo','media+inhibitor+toxo'])) &
                     (data['percent_toxo'] < threshold_percent_toxo)
                     ].index)
-    ##### 
     
+    #### export mean and stdev for dataset
+    
+    for timepoint in np.unique(data['time_hours']):
+        pass
+        print(f"{'-'*20} timepoint: {timepoint} {'-'*20}")
+        print("Mean")
+        df_sub = data[data['time_hours'] == timepoint]
+        df_groupby_mean = df_sub[['treatment','redox_ratio_norm_mean']].groupby('treatment').mean()
+        print(df_groupby_mean)
+        print("Standard Deviation")
+        df_groupby_std = df_sub[['treatment','redox_ratio_norm_mean']].groupby('treatment').std()
+        print(df_groupby_std)
+                          
     #####
     x = "time_hours"
     y = LIST_OMI_PARAMETERS[dict_key]
@@ -225,7 +245,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     
     ############ NORMALIZE REDOX RATIO AND OTHER PARAMETERS TO CONTROL 
     data_normalized_to_control = data.copy()
-    if dict_key in ['Redox Ratio', 'NAD(P)H a1', 'NAD(P)H a2', 'NAD(P)H Tm']:
+    if dict_key in ['Redox Ratio', 'NAD(P)H a1', 'NAD(P)H a2']:
         pass
         for tp in np.unique(data['time_hours']):
             pass
@@ -264,9 +284,9 @@ for dict_key in LIST_OMI_PARAMETERS:
 
     # Finally save fig
     if bool_all_conditions:
-        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.png", bbox_inches='tight')   
+        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.svg", bbox_inches='tight')   
     else:
-        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.png", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.svg", bbox_inches='tight')
 
     plt.show()
 
@@ -275,7 +295,7 @@ for dict_key in LIST_OMI_PARAMETERS:
 for experiment in np.unique(df_data['experiment']):
     pass
 
-    for dict_key in LIST_OMI_PARAMETERS:
+    for dict_key in tqdm(LIST_OMI_PARAMETERS):
         pass
 
         palette ={"media": '#1690FF', "media+toxo": '#FC5353'}
@@ -287,7 +307,7 @@ for experiment in np.unique(df_data['experiment']):
         
         ## filter by high toxo content
         ## threshold df by percent_toxo here
-        threshold_percent_toxo = 0.1
+        threshold_percent_toxo = 0.05
         data = data.drop(data[(data['treatment'] == 'media+toxo') & (data['percent_toxo'] < threshold_percent_toxo)].index)
         
         x = "time_hours"
@@ -338,7 +358,7 @@ for experiment in np.unique(df_data['experiment']):
         # annotator.apply_and_annotate()
     
         # Finally save fig    
-        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}.png", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}.svg", bbox_inches='tight')
         plt.show()
         # plt.close()
 
