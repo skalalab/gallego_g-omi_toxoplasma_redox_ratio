@@ -13,6 +13,9 @@ from sklearn import preprocessing
 from itertools import combinations
 import natsort
 
+from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
+
+
 from tqdm import tqdm
 # import proplot as pplt
 #%% Load data
@@ -70,6 +73,10 @@ for experiment in np.unique(df_data['experiment']):
     plt.title(f"Percent toxo captured per timepoint \nexperiment: {experiment}")
     plt.legend()
     plt.grid()
+    plt.locator_params(nbins=10)
+    plt.xlim(0,100)
+    plt.xlabel("Percent toxoplasma in cell")
+    plt.ylabel("Cell Count")
     plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.svg", bbox_inches='tight')
     plt.show()
     
@@ -84,8 +91,10 @@ for experiment in np.unique(df_data['experiment']):
         fig, ax = plt.subplots(1,1, figsize=(10,10))
         fig.suptitle(f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}")
         ax.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20)
-        ax.xlabel='percent toxo'
-        ax.ylabel='cell count'
+        plt.xlabel("Percent toxoplasma in cell")
+        plt.ylabel("Cell Count")
+        plt.locator_params(nbins=10)
+        plt.xlim(0,100)
         plt.grid()
         plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.svg", bbox_inches='tight')
         plt.show()
@@ -98,12 +107,14 @@ for timepoint in np.unique(df_data['time_hours']):
      df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
                               (df_data['treatment']=='media+toxo') ## only for media+toxo
                               ]
-     plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
+     ax = plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
 plt.title(f"Percent Toxo Captured Per Timepoint \nAll Experiments")
 plt.xlabel("Percent toxoplasma in cell")
-plt.ylabel("Count Cells")
+plt.ylabel("Cell Count")
 plt.grid()
 plt.legend()
+plt.locator_params(nbins=10)
+plt.xlim(0,100)
 plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.svg", bbox_inches='tight')
 plt.show()
 #%%
