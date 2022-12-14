@@ -14,6 +14,7 @@ from itertools import combinations
 import natsort
 
 from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
+from natsort import natsort_keygen
 
 
 from tqdm import tqdm
@@ -22,7 +23,8 @@ from tqdm import tqdm
 output_format = 'png'
 # output_format = 'svg'
 #%% Load data
-path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
+# path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
+path_project = Path(r"/mnt/Z/0-Projects and Experiments/GG - toxo_omi_redox_ratio/")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
 df_data = pd.read_csv(path_all_features)
 
@@ -62,6 +64,9 @@ LIST_OMI_PARAMETERS = {
 analysis_type = 'toxo_inside_cells_high_vs_low'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
+bool_boxwhisker = False # false plots lineplots
+plot_type = "boxwhisker" if bool_boxwhisker else "lineplot"
+
 for experiment in np.unique(df_data['experiment']):
     pass
 
@@ -72,7 +77,13 @@ for experiment in np.unique(df_data['experiment']):
                                  (df_data['experiment']==experiment) &
                                  (df_data['treatment']=='media+toxo') ## only for media+toxo
                                  ]
-        plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
+        
+        if bool_boxwhisker:
+            plt_data = plt.hist(df_data_subset['percent_toxo'] * 100, range=(0,100), histtype='step', bins=20, label=timepoint)
+        else: # line plots 
+            plt_data = np.histogram(df_data_subset['percent_toxo'] * 100,  bins=20, range=(0,100))
+            plt.plot(np.linspace(5, 100 , 20 ), plt_data[0], label=timepoint)
+            
     plt.title(f"Percent toxo captured per timepoint \nexperiment: {experiment}")
     plt.legend()
     plt.grid()
@@ -80,7 +91,7 @@ for experiment in np.unique(df_data['experiment']):
     plt.xlim(0,100)
     plt.xlabel("Percent toxoplasma in cell")
     plt.ylabel("Cell Count")
-    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}.{output_format}", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}_{plot_type}.{output_format}", bbox_inches='tight')
     plt.show()
     
     ##%% PLOT PERCENT CAPTURED -- ONE FIGURE PER TIMEPOINT per experiment
@@ -91,26 +102,45 @@ for experiment in np.unique(df_data['experiment']):
                                  (df_data['treatment']=='media+toxo')
                                  ]
         #plot
-        fig, ax = plt.subplots(1,1, figsize=(10,10))
+        fig, ax = plt.subplots(1,1, figsize=(10,11))
         fig.suptitle(f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}")
-        ax.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20)
+        
+        #boxwhisker
+        # ax.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20)
+        if bool_boxwhisker:
+           plt_data = plt.hist(df_data_subset['percent_toxo'] * 100, range=(0,100), histtype='step', bins=20, label=timepoint)
+        
+        else: # line plots 
+           plt_data = np.histogram(df_data_subset['percent_toxo'] * 100,  bins=20, range=(0,100))
+           plt.plot(np.linspace(5, 100 , 20 ), plt_data[0], label=timepoint)
+        
         plt.xlabel("Percent toxoplasma in cell")
         plt.ylabel("Cell Count")
         plt.locator_params(nbins=10)
         plt.xlim(0,100)
         plt.grid()
-        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}.{output_format}", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"percent_toxo_{experiment}_timepoint_{timepoint}_{analysis_type}_{plot_type}.{output_format}", bbox_inches='tight')
         plt.show()
 
     
 ##%% TOXO CONDITION --> LOW VS HIGH TOXO  -- TOXO CONTENT,  ALL EXPERIMENTS BY TIMEPOINT
 
 for timepoint in np.unique(df_data['time_hours']):
-     pass
-     df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
-                              (df_data['treatment']=='media+toxo') ## only for media+toxo
-                              ]
-     ax = plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
+    pass
+    df_data_subset = df_data[(df_data['time_hours']==timepoint) & 
+                             (df_data['treatment']=='media+toxo') ## only for media+toxo
+                             ]
+    # boxshiker
+    # ax = plt.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20, label=timepoint)
+     
+     
+    # lineplot
+    if bool_boxwhisker:
+       plt_data = plt.hist(df_data_subset['percent_toxo'] * 100, range=(0,100), histtype='step', bins=20, label=timepoint)
+    else: # line plots 
+       plt_data = np.histogram(df_data_subset['percent_toxo'] * 100,  bins=20, range=(0,100))
+       plt.plot(np.linspace(5, 100 , 20 ), plt_data[0], label=timepoint)
+
 plt.title(f"Percent Toxo Captured Per Timepoint \nAll Experiments")
 plt.xlabel("Percent toxoplasma in cell")
 plt.ylabel("Cell Count")
@@ -118,7 +148,7 @@ plt.grid()
 plt.legend()
 plt.locator_params(nbins=10)
 plt.xlim(0,100)
-plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}.{output_format}", bbox_inches='tight')
+plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}_{plot_type}.{output_format}", bbox_inches='tight')
 plt.show()
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
@@ -178,7 +208,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     annotator.apply_and_annotate()
 
     # Finally save fig    
-    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
+    # plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
     plt.show()
 
 #%% CONTROL VS HIGH TOXO CELLS
@@ -191,7 +221,9 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
 # all conditions if not just media and media+toxo
-bool_all_conditions = False
+bool_all_conditions = True
+bool_boxwhisker_plots = False
+plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 p_values = "ns: p <= 1 | "\
            "*: .01 < p <= .05  | "\
@@ -257,9 +289,9 @@ for dict_key in LIST_OMI_PARAMETERS:
         pairs_inhibitor=[((str(x) , 'media+inhibitor'), (str(x),'media+inhibitor+toxo')) for x in np.unique(df_data["time_hours"]) ]
         pairs += pairs_inhibitor
     
-    ############ NORMALIZE REDOX RATIO AND OTHER PARAMETERS TO CONTROL 
+    ############ NORMALIZE REDOX RATIO TO CONTROL 
     data_normalized_to_control = data.copy()
-    if dict_key in ['Redox Ratio', 'NAD(P)H a1', 'NAD(P)H a2']:
+    if dict_key in ['Redox Ratio']: #
         pass
         for tp in np.unique(data['time_hours']):
             pass
@@ -268,24 +300,39 @@ for dict_key in LIST_OMI_PARAMETERS:
                                               (data['treatment'] == 'media')][values_name]
             control_mean = control_data_for_timepoint.mean()
             
-            data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp,values_name] -= control_mean
+            data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp, values_name] /= control_mean # -= control_mean
         data = data_normalized_to_control
-    ############
     
-    ax = sns.boxplot(
-                    x=x, 
-                    y=y, 
-                    hue=hue, 
-                    data=data,
-                    palette=palette, 
-                    hue_order=hue_order,
-                    order=order,
-                )
-
+    ############ plot boxplots
+    if bool_boxwhisker_plots:
+        ax = sns.boxplot(
+                        x=x, 
+                        y=y, 
+                        hue=hue, 
+                        data=data,
+                        palette=palette, 
+                        hue_order=hue_order,
+                        order=order,
+                    )
+    else:
+        ## plot line plots
+        
+        ax_line = sns.lineplot(
+            x=x, 
+            y=y, 
+            hue=hue, 
+            data=data.sort_values(by='time_hours', key=natsort_keygen()),
+            palette=palette, 
+            hue_order=hue_order,
+            estimator='mean'
+            # order=order,
+            )
+    
+    #### rest of figure
     figure_title = f"{dict_key} | threshold: {threshold_percent_toxo} |  NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox Ratio" else f"{dict_key} | threshold: {threshold_percent_toxo}"
     plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
     plt.xlabel("Time Point (hrs)")
-    plt.ylabel(dict_key)
+    plt.ylabel(dict_key) if dict_key != 'Redox Ratio' else plt.ylabel("Normalized Redox Ratio")
     # if dict_key == "Redox Ratio":
     #     plt.ylim((0,1))
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
@@ -298,13 +345,19 @@ for dict_key in LIST_OMI_PARAMETERS:
 
     # Finally save fig
     if bool_all_conditions:
-        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_kiss_and_spit.{output_format}", bbox_inches='tight')   
+        plt.savefig(path_output_figures / "kiss_and_spit" /f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}_kiss_and_spit.{output_format}", bbox_inches='tight')   
     else:
-        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}.{output_format}", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
 
     plt.show()
 
 #%% MEDIA VS MEDIA+TOXO - BY EXPERIMENTS
+
+analysis_type = 'whole_cell_vs_high_toxo'
+path_output_figures = path_project / "figures" / analysis_type / "seaborn"
+
+bool_boxwhisker_plots = False
+plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 for experiment in np.unique(df_data['experiment']):
     pass
@@ -344,25 +397,37 @@ for experiment in np.unique(df_data['experiment']):
                                                   ]['redox_ratio_norm_mean']
                 control_mean = control_data_for_timepoint.mean()
                 
-                data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp,'redox_ratio_norm_mean'] -= control_mean
+                data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp,'redox_ratio_norm_mean'] /= control_mean
             data = data_normalized_to_control
         ############
         
-        ax = sns.boxplot(
-                        x=x, 
-                        y=y, 
-                        hue=hue, 
-                        # kind="box", 
-                        data=data,
-                        palette=palette, 
-                        hue_order=hue_order,
-                        order=order,
-                    )
-
+        
+        if bool_boxwhisker_plots:
+            ax = sns.boxplot(
+                            x=x, 
+                            y=y, 
+                            hue=hue, 
+                            # kind="box", 
+                            data=data,
+                            palette=palette, 
+                            hue_order=hue_order,
+                            order=order,
+                        )
+        else:
+            ax_line = sns.lineplot(
+                x=x, 
+                y=y, 
+                hue=hue, 
+                data=data.sort_values(by='time_hours', key=natsort_keygen()),
+                palette=palette, 
+                hue_order=hue_order,
+                estimator='mean'
+                # order=order,
+                )
         figure_title = f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo}"
         plt.title(f"{analysis_type} \n{figure_title} \n{p_values}")
         plt.xlabel("Time Point (hrs)")
-        plt.ylabel(dict_key)
+        plt.ylabel(dict_key) if dict_key != 'Redox Ratio' else plt.ylabel("Normalized Redox Ratio")
         plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
         plt.tight_layout()
     
@@ -372,7 +437,7 @@ for experiment in np.unique(df_data['experiment']):
         # annotator.apply_and_annotate()
     
         # Finally save fig    
-        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}.{output_format}", bbox_inches='tight')
+        plt.savefig(path_output_figures / f"{experiment}_{analysis_type}_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
         plt.show()
         # plt.close()
 
