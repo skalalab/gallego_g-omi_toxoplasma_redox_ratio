@@ -6,6 +6,8 @@ from natsort import natsorted
 from cell_analysis_tools.io import read_asc
 import matplotlib as mpl
 mpl.rcParams["figure.dpi"]=300
+
+
 from pathlib import Path
 import pandas as pd
 from statannotations.Annotator import Annotator
@@ -16,15 +18,13 @@ import natsort
 from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
 from natsort import natsort_keygen
 
-
 from tqdm import tqdm
 # import proplot as pplt
 
 output_format = 'png'
 # output_format = 'svg'
 #%% Load data
-# path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_project = Path(r"/mnt/Z/0-Projects and Experiments/GG - toxo_omi_redox_ratio/")
+path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
 df_data = pd.read_csv(path_all_features)
 
@@ -64,6 +64,14 @@ LIST_OMI_PARAMETERS = {
 analysis_type = 'toxo_inside_cells_high_vs_low'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
+
+font = {'family' : 'Arial',
+        'weight' : 'bold',
+        'size'   : 10}
+mpl.rc('font', **font)
+
+
+
 bool_boxwhisker = False # false plots lineplots
 plot_type = "boxwhisker" if bool_boxwhisker else "lineplot"
 
@@ -91,6 +99,13 @@ for experiment in np.unique(df_data['experiment']):
     plt.xlim(0,100)
     plt.xlabel("Percent toxoplasma in cell")
     plt.ylabel("Cell Count")
+    
+    
+    ax = plt.gca()
+    ax.axhline(linewidth=3, color="k")        # inc. width of x-axis and color it green
+    ax.axvline(linewidth=3, color="k")  
+    # ax.set_ylim(0,100)
+    
     plt.savefig(path_output_figures / f"percent_toxo_{experiment}_{analysis_type}_{plot_type}.{output_format}", bbox_inches='tight')
     plt.show()
     
@@ -103,8 +118,13 @@ for experiment in np.unique(df_data['experiment']):
                                  ]
         #plot
         fig, ax = plt.subplots(1,1, figsize=(10,11))
-        fig.suptitle(f"percent toxo in cells \n experiment: {experiment}  \ntime point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} \ntotal cells={len(df_data_subset)}")
+        fig.suptitle(f"percent toxo in cells \n experiment: {experiment} | time point = {timepoint} \nmean: {np.mean(df_data_subset['percent_toxo']):.3f} | total cells={len(df_data_subset)}")
         
+        ## set font and weights
+        ax.axhline(linewidth=4, color="k")        # inc. width of x-axis and color it green
+        ax.axvline(linewidth=5, color="k")  
+        # ax.set_ylim(0,40)
+
         #boxwhisker
         # ax.hist(df_data_subset['percent_toxo'] * 100, histtype='step', bins=20)
         if bool_boxwhisker:
@@ -148,6 +168,10 @@ plt.grid()
 plt.legend()
 plt.locator_params(nbins=10)
 plt.xlim(0,100)
+# plt.ylim(0,150)
+ax = plt.gca()
+ax.axhline(linewidth=4, color="k")
+ax.axvline(linewidth=5, color="k")
 plt.savefig(path_output_figures / f"percent_toxo_all_experiments_{analysis_type}_{plot_type}.{output_format}", bbox_inches='tight')
 plt.show()
 #%%
@@ -159,7 +183,17 @@ p_values = "ns: p <= 1 | "\
            "***: .0001 < p <= .001  | "\
            "****: p <= .0001"
 
-mpl.rcParams['figure.figsize'] = 11.7,8.27
+mpl.rcParams['figure.figsize'] = 20,15
+# mpl.rc('xtick', labelsize=20) 
+# mpl.rc('ytick', labelsize=20) 
+
+font = {'family' : 'Arial',
+        'weight' : 'bold',
+        'size'   : 35}
+mpl.rc('font', **font)
+
+
+
 for dict_key in LIST_OMI_PARAMETERS:
     pass
     palette ={"low_toxo": '#1690FF', "high_toxo": '#FC5353'}
@@ -193,14 +227,32 @@ for dict_key in LIST_OMI_PARAMETERS:
                 )    
     figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD) \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}" \
         if dict_key == "Redox Ratio" else f"{dict_key} \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}"
-    plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
+    
+    # plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
     plt.xlabel("Time Point (hrs)")
     plt.ylabel(dict_key)
-    if dict_key == "Redox Ratio":
-        plt.ylim((0,1))
+    # if dict_key == "Redox Ratio":
+    #     plt.ylim((0,1))
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0, title="Conditions")
     plt.tight_layout()
-    # plt.show()
+    
+
+    
+    # text size and line weights
+    # ax = plt.gca()
+    # ax.axhline(linewidth=4, color="k")
+    # ax.axvline(linewidth=5, color="k")
+    
+    ###########
+    # x and y axis weights
+    ax = plt.gca()
+    l,r,b,t = list(ax.spines.values())
+    plt.setp([l,b], linewidth=3)
+    
+    # The ticks
+    ax.xaxis.set_tick_params(width=5)
+    ax.yaxis.set_tick_params(width=5)
+        
 
     # Annotations
     annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)
@@ -208,7 +260,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     annotator.apply_and_annotate()
 
     # Finally save fig    
-    # plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
     plt.show()
 
 #%% CONTROL VS HIGH TOXO CELLS
@@ -221,8 +273,8 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
 # all conditions if not just media and media+toxo
-bool_all_conditions = True
-bool_boxwhisker_plots = False
+bool_all_conditions = False
+bool_boxwhisker_plots = True
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 p_values = "ns: p <= 1 | "\
@@ -231,7 +283,9 @@ p_values = "ns: p <= 1 | "\
            "***: .0001 < p <= .001  | "\
            "****: p <= .0001"
 
-mpl.rcParams['figure.figsize'] = 11.7,8.27
+mpl.rcParams['figure.figsize'] =25,15
+
+
 for dict_key in LIST_OMI_PARAMETERS:
     pass
     
@@ -329,19 +383,31 @@ for dict_key in LIST_OMI_PARAMETERS:
             )
     
     #### rest of figure
-    figure_title = f"{dict_key} | threshold: {threshold_percent_toxo} |  NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox Ratio" else f"{dict_key} | threshold: {threshold_percent_toxo}"
-    plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
+    # figure_title = f"{dict_key} | threshold: {threshold_percent_toxo} |  NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox Ratio" else f"{dict_key} | threshold: {threshold_percent_toxo}"
+    # plt.title(f"{analysis_type} \n{figure_title} \n {p_values}")
     plt.xlabel("Time Point (hrs)")
     plt.ylabel(dict_key) if dict_key != 'Redox Ratio' else plt.ylabel("Normalized Redox Ratio")
     # if dict_key == "Redox Ratio":
     #     plt.ylim((0,1))
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
     plt.tight_layout()
+    
+    
+    #####
+    # x and y axis weights
+    ax = plt.gca()
+    l,r,b,t = list(ax.spines.values())
+    plt.setp([l,b], linewidth=3)
+    
+    # The ticks
+    ax.xaxis.set_tick_params(width=5)
+    ax.yaxis.set_tick_params(width=5)
 
     # Annotations
-    annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)
-    annotator.configure(test='t-test_ind', text_format='star', loc='inside')
-    annotator.apply_and_annotate()
+    if bool_boxwhisker_plots:
+        annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)
+        annotator.configure(test='t-test_ind', text_format='star', loc='inside')
+        annotator.apply_and_annotate()
 
     # Finally save fig
     if bool_all_conditions:
@@ -356,7 +422,10 @@ for dict_key in LIST_OMI_PARAMETERS:
 analysis_type = 'whole_cell_vs_high_toxo'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 
-bool_boxwhisker_plots = False
+mpl.rcParams['figure.figsize'] =20,15
+
+
+bool_boxwhisker_plots = True
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 for experiment in np.unique(df_data['experiment']):
@@ -424,12 +493,22 @@ for experiment in np.unique(df_data['experiment']):
                 estimator='mean'
                 # order=order,
                 )
-        figure_title = f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo}"
-        plt.title(f"{analysis_type} \n{figure_title} \n{p_values}")
+        # figure_title = f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo} | NAD(P)H/(NAD(P)H + FAD)" if dict_key == "Redox ratio" else f"{dict_key} | Dataset: {experiment} | threshold: {threshold_percent_toxo}"
+        # plt.title(f"{analysis_type} \n{figure_title} \n{p_values}")
         plt.xlabel("Time Point (hrs)")
         plt.ylabel(dict_key) if dict_key != 'Redox Ratio' else plt.ylabel("Normalized Redox Ratio")
         plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
         plt.tight_layout()
+        
+        # x and y axis weights
+        ax = plt.gca()
+        l,r,b,t = list(ax.spines.values())
+        plt.setp([l,b], linewidth=3)
+        
+        # The ticks
+
+        ax.xaxis.set_tick_params(width=5)
+        ax.yaxis.set_tick_params(width=5)
     
         # Annotations
         # annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)

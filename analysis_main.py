@@ -43,7 +43,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     
     print(dict_dataset)
     # itereate through rows of dict
-    for idx, row_data in tqdm(list(df_data.iterrows())[:]): # iterate through sets
+    for idx, row_data in tqdm(list(df_data.iterrows())[:]): # 23:24 iterate through sets
         pass
     
         # only look at media nad media+toxo experiments
@@ -73,8 +73,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
         # VISUALIZE INTENSITY AND MASK
         if debug:
             suptitle = f"{idx} \n{Path(row_data.nadh_photons).name}  |  {row_data.treatment}  |  {row_data.time_hours} hrs"
-            compare_images(nadh_photons, f"original image",
-                           mask_cell, " mask",
+            compare_images(f"original image", nadh_photons,
+                           " mask", mask_cell,
                            suptitle=suptitle)
 
         
@@ -150,9 +150,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
              
             if debug:
                     
-                compare_images( nadh_photons, 
-                               f"original image  ",
-                               mask_toxo, "mask toxo",
+                compare_images(f"original image  ", nadh_photons,
+                               "mask toxo", mask_toxo, 
                                suptitle=suptitle)
 
             # quantify percent toxo in cell
@@ -166,8 +165,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
                     omi_props[key_roi]["percent_toxo"] = percent_content_captured(roi_cell, roi_toxo)
                     
                 # VISUALIZE TOXO PER ROI -- use for debugging
-                # compare_images(roi_cell, "roi_cell", roi_toxo, "roi_toxo", 
-                #           suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
+                compare_images("roi_cell", roi_cell, "roi_toxo", roi_toxo, 
+                          suptitle=f"{key_roi} \npercent toxo={omi_props[key_roi]['percent_toxo']:.3f}" )
         
         # if this image doesn't contain toxo then fill values with 0
         else:
@@ -216,7 +215,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     path_feature_summaries = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
     d = date.today().strftime("%Y_%m_%d")
     df_all_props = df_all_props.set_index('base_name_with_roi', drop=True)
-    df_all_props.to_csv(path_feature_summaries / f"{d}_all_props_cells.csv")
+    # df_all_props.to_csv(path_feature_summaries / f"{d}_all_props_cells.csv")
     
 #%% PLOT VALUES WITH LARGE MEDIAN CHI SQUARED
 
