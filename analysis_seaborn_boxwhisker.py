@@ -21,8 +21,8 @@ from natsort import natsort_keygen
 from tqdm import tqdm
 # import proplot as pplt
 
-output_format = 'png'
-# output_format = 'svg'
+# output_format = 'png'
+output_format = 'svg'
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
@@ -59,7 +59,7 @@ LIST_OMI_PARAMETERS = {
     'Redox Ratio' : 'redox_ratio_norm_mean'
     }
 
-#%% TOXO CONDITION --> LOW VS HIGH TOXO 
+#%% TOXO CONDITION --> HISTOGRAMS OF PERCENT LOW VS HIGH TOXO 
 
 analysis_type = 'toxo_inside_cells_high_vs_low'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
@@ -69,8 +69,6 @@ font = {'family' : 'Arial',
         'weight' : 'bold',
         'size'   : 10}
 mpl.rc('font', **font)
-
-
 
 bool_boxwhisker = False # false plots lineplots
 plot_type = "boxwhisker" if bool_boxwhisker else "lineplot"
@@ -184,8 +182,6 @@ p_values = "ns: p <= 1 | "\
            "****: p <= .0001"
 
 mpl.rcParams['figure.figsize'] = 20,15
-# mpl.rc('xtick', labelsize=20) 
-# mpl.rc('ytick', labelsize=20) 
 
 font = {'family' : 'Arial',
         'weight' : 'bold',
@@ -193,6 +189,8 @@ font = {'family' : 'Arial',
 mpl.rc('font', **font)
 
 
+bool_boxwhisker = False # false plots lineplots
+plot_type = "boxwhisker" if bool_boxwhisker else "lineplot"
 
 for dict_key in LIST_OMI_PARAMETERS:
     pass
@@ -216,15 +214,30 @@ for dict_key in LIST_OMI_PARAMETERS:
     order = list(map(str,np.unique(df_data['time_hours'])))
     pairs=[((str(x) , 'low_toxo'), (str(x),'high_toxo')) for x in np.unique(df_data["time_hours"]) ]
         
-    ax = sns.boxplot(
-                    x=x,
-                    y=y, 
-                    hue=hue, 
-                    data=data,
-                    palette=palette, 
-                    hue_order=hue_order,
-                    order=order,
-                )    
+    if bool_boxwhisker:
+        ax = sns.boxplot(
+                        x=x, 
+                        y=y, 
+                        hue=hue, 
+                        data=data,
+                        palette=palette, 
+                        hue_order=hue_order,
+                        order=order,
+                    )
+    else:
+        ## plot line plots
+        
+        ax_line = sns.lineplot(
+            x=x, 
+            y=y, 
+            hue=hue, 
+            data=data.sort_values(by='time_hours', key=natsort_keygen()),
+            palette=palette, 
+            hue_order=hue_order,
+            estimator='mean'
+            # order=order,
+            )
+        
     figure_title = f"{dict_key} | NAD(P)H/(NAD(P)H + FAD) \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}" \
         if dict_key == "Redox Ratio" else f"{dict_key} \npercent threshold toxo content: {threshold_percent_toxo} | cell count low:high = {sum(data['toxo_class']=='low_toxo')}:{sum(data['toxo_class']=='high_toxo')}"
     
@@ -236,13 +249,6 @@ for dict_key in LIST_OMI_PARAMETERS:
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0, title="Conditions")
     plt.tight_layout()
     
-
-    
-    # text size and line weights
-    # ax = plt.gca()
-    # ax.axhline(linewidth=4, color="k")
-    # ax.axvline(linewidth=5, color="k")
-    
     ###########
     # x and y axis weights
     ax = plt.gca()
@@ -253,19 +259,22 @@ for dict_key in LIST_OMI_PARAMETERS:
     ax.xaxis.set_tick_params(width=5)
     ax.yaxis.set_tick_params(width=5)
         
-
-    # Annotations
-    annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)
-    annotator.configure(test='t-test_ind', text_format='star', loc='inside')
-    annotator.apply_and_annotate()
+    if bool_boxwhisker:
+        # Annotations
+        annotator = Annotator(ax, pairs, data=data, x=x, y=y, order=order, hue=hue, hue_order=hue_order)
+        annotator.configure(test='t-test_ind', text_format='star', loc='inside')
+        annotator.apply_and_annotate()
 
     # Finally save fig    
-    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}.{output_format}", bbox_inches='tight')
+    plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
     plt.show()
 
 #%% CONTROL VS HIGH TOXO CELLS
 
-#TODO
+font = {'family' : 'Arial',
+        'weight' : 'bold',
+        'size'   : 35}
+mpl.rc('font', **font)
 
 analysis_type = 'whole_cell_vs_high_toxo'
 path_output_figures = path_project / "figures" / analysis_type / "seaborn"
@@ -273,8 +282,13 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
 # all conditions if not just media and media+toxo
-bool_all_conditions = False
-bool_boxwhisker_plots = True
+data_to_plot = "all"
+# data_to_plot = "media_vs_high_toxo"
+# data_to_plot = "kiss_and_spit"
+
+# bool_all_conditions = True
+bool_boxwhisker_plots = False
+
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 p_values = "ns: p <= 1 | "\
@@ -285,17 +299,21 @@ p_values = "ns: p <= 1 | "\
 
 mpl.rcParams['figure.figsize'] =25,15
 
-
 for dict_key in LIST_OMI_PARAMETERS:
     pass
+    if dict_key != "Redox Ratio":
+        continue
     
-    # ALL  CONDITIONS
-    if bool_all_conditions:
+    # GET SUBSET OF DTASET
+    if data_to_plot == "all":
         palette ={"media": '#1690FF', "media+toxo": '#FC5353', 'media+inhibitor' : '#a83dc2', 'media+inhibitor+toxo' : '#1ad2e5'}
         data = df_data[df_data['treatment'].isin(['media','media+toxo','media+inhibitor','media+inhibitor+toxo'])]
-    else:
-        #####
-        # TWO CONDITIONS
+        
+    elif data_to_plot == "kiss_and_spit":
+        palette ={'media+inhibitor' : '#a83dc2', 'media+inhibitor+toxo' : '#1ad2e5'}
+        data = df_data[df_data['treatment'].isin(['media+inhibitor','media+inhibitor+toxo'])]
+    
+    elif data_to_plot == "media_vs_high_toxo":
         palette ={"media": '#1690FF', "media+toxo": '#FC5353'}
         data = df_data[df_data['treatment'].isin(['media','media+toxo'])]
         
@@ -330,18 +348,31 @@ for dict_key in LIST_OMI_PARAMETERS:
     x = "time_hours"
     y = LIST_OMI_PARAMETERS[dict_key]
     hue = "treatment"
-    if bool_all_conditions:
+    
+    
+    if data_to_plot == "all":
         hue_order=['media','media+toxo', 'media+inhibitor', 'media+inhibitor+toxo'] # ALL CONDITIONS
-    else:
+        
+    elif data_to_plot == "media_vs_high_toxo":
         hue_order=['media','media+toxo'] # TWO CONDITIONS 
+
+    elif data_to_plot == "kiss_and_spit":
+        hue_order=['media+inhibitor', 'media+inhibitor+toxo'] # kiss and spit conditions
+
     order = list(map(str,np.unique(df_data['time_hours'])))
     
-    # FOR STATANNOTATIONS
-    pairs=[((str(x) , 'media'), (str(x),'media+toxo')) for x in np.unique(df_data["time_hours"]) ]
     
-    if bool_all_conditions:
-        pairs_inhibitor=[((str(x) , 'media+inhibitor'), (str(x),'media+inhibitor+toxo')) for x in np.unique(df_data["time_hours"]) ]
-        pairs += pairs_inhibitor
+    # FOR STATANNOTATIONS
+    pairs_control_vs_high_toxo=[((str(x) , 'media'), (str(x),'media+toxo')) for x in np.unique(df_data["time_hours"]) ]
+    pairs_inhibitor=[((str(x) , 'media+inhibitor'), (str(x),'media+inhibitor+toxo')) for x in np.unique(df_data["time_hours"]) ]
+
+    if data_to_plot == "all":
+        pairs = pairs_control_vs_high_toxo + pairs_inhibitor
+    elif data_to_plot == "media_vs_high_toxo":
+        pairs = pairs_control_vs_high_toxo
+    elif data_to_plot == "kiss_and_spit":
+        pairs = pairs_inhibitor
+    
     
     ############ NORMALIZE REDOX RATIO TO CONTROL 
     data_normalized_to_control = data.copy()
@@ -350,8 +381,17 @@ for dict_key in LIST_OMI_PARAMETERS:
         for tp in np.unique(data['time_hours']):
             pass
             values_name = LIST_OMI_PARAMETERS[dict_key]
-            control_data_for_timepoint = data[(data['time_hours'] == tp) & 
-                                              (data['treatment'] == 'media')][values_name]
+            
+            ## normalize data to media as control
+            if data_to_plot in ["all", "media_vs_high_toxo"]:
+                control_data_for_timepoint = data[(data['time_hours'] == tp) & 
+                                                  (data['treatment'] == 'media')][values_name]
+            
+            # normalize kiss and spit data to media+inhibitor
+            elif data_to_plot == "kiss_and_spit":
+                control_data_for_timepoint = data[(data['time_hours'] == tp) & 
+                                                  (data['treatment'] == 'media+inhibitor')][values_name]
+            
             control_mean = control_data_for_timepoint.mean()
             
             data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp, values_name] /= control_mean # -= control_mean
@@ -392,7 +432,6 @@ for dict_key in LIST_OMI_PARAMETERS:
     plt.legend(bbox_to_anchor=(1.02, 0.55), loc='upper left', borderaxespad=0)
     plt.tight_layout()
     
-    
     #####
     # x and y axis weights
     ax = plt.gca()
@@ -410,10 +449,12 @@ for dict_key in LIST_OMI_PARAMETERS:
         annotator.apply_and_annotate()
 
     # Finally save fig
-    if bool_all_conditions:
-        plt.savefig(path_output_figures / "kiss_and_spit" /f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}_kiss_and_spit.{output_format}", bbox_inches='tight')   
-    else:
-        plt.savefig(path_output_figures / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
+    if data_to_plot == "all":
+        plt.savefig(path_output_figures / "all_conditions" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}_kiss_and_spit.{output_format}", bbox_inches='tight')   
+    elif data_to_plot == "media_vs_high_toxo":
+        plt.savefig(path_output_figures / "media_vs_high_toxo" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
+    elif data_to_plot == "kiss_and_spit":
+        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
 
     plt.show()
 
@@ -425,7 +466,7 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 mpl.rcParams['figure.figsize'] =20,15
 
 
-bool_boxwhisker_plots = True
+bool_boxwhisker_plots = False
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
 for experiment in np.unique(df_data['experiment']):

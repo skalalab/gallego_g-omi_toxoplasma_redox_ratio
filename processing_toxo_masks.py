@@ -20,7 +20,7 @@ from cell_analysis_tools.visualization import compare_images
 path_dicts = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\dictionaries")
 list_datasets = list(path_dicts.glob("*.csv"))
 
-for path_dict_dataset in tqdm(list_datasets[:]):
+for path_dict_dataset in tqdm(list_datasets[:1]):
     pass
 
     debug = True
@@ -41,22 +41,33 @@ for path_dict_dataset in tqdm(list_datasets[:]):
             path_output = path_dataset / "generated_toxo_masks"
 
 
-    for index, row_data in tqdm(list(df_dataset_toxo.iterrows())[:]):
+    for index, row_data in tqdm(list(df_dataset_toxo.iterrows())[23:24]):
         pass
-        im = tifffile.imread(row_data['toxo_photons']) # 
+        im = tifffile.imread(row_data['toxo_photons'])
+            
         im_clipped = np.clip(im, 0, np.percentile(im,99))
         im_clipped_bottom = np.clip(im_clipped, np.percentile(im_clipped,90), np.max(im_clipped))
         mask_dilated = binary_closing(im_clipped_bottom > np.min(im_clipped_bottom), octagon(1,1))
         im_fill_holes = binary_fill_holes(mask_dilated, disk(1))      
         mask_remove_objects = remove_small_objects(im_fill_holes, min_size=30, connectivity=1)
-        
         im_top_percentile = im_clipped > np.percentile(im_clipped,95)
-        # plt.imshow(im_top_percentile)
-        # plt.show()
-        
         final_mask = np.bitwise_or(mask_remove_objects, im_top_percentile)
         
-        compare_images(im_clipped, "original", final_mask, "mask")
+        def single_plot(title, im):
+            plt.title(title)
+            plt.imshow(im)
+            plt.show()
+            
+        if debug:
+            single_plot('clipped', im_clipped)
+            single_plot('bottom_clipped', im_clipped_bottom)
+            single_plot('dilated', mask_dilated)
+            single_plot('filled holes', im_fill_holes)
+            single_plot('remove objects', mask_remove_objects)
+            single_plot('top_95_percentile', im_top_percentile)
+
+        
+        compare_images("original", im_clipped, "mask", final_mask, suptitle=f"{index} - {Path(row_data['toxo_photons']).name}")
         
         
         # compare_images(np.clip(im, 0, np.percentile(im,99)),"original",

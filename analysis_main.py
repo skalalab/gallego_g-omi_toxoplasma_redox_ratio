@@ -37,7 +37,7 @@ debug = False
 skipped_images = []
 
 # iterate through dictionaries
-for dict_dataset in tqdm(list_dataset_dicts[:]):
+for dict_dataset in tqdm(list_dataset_dicts[:1]):
     pass
     df_data = pd.read_csv(dict_dataset, index_col=("index"))
     
@@ -45,6 +45,8 @@ for dict_dataset in tqdm(list_dataset_dicts[:]):
     # itereate through rows of dict
     for idx, row_data in tqdm(list(df_data.iterrows())[:]): # 23:24 iterate through sets
         pass
+        if row_data.name != "04_19_2019_idx_40":
+            continue
     
         # only look at media nad media+toxo experiments
         # if row_data.treatment not in ["media", "media+toxo"]:
