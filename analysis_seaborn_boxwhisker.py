@@ -21,8 +21,8 @@ from natsort import natsort_keygen
 from tqdm import tqdm
 # import proplot as pplt
 
-# output_format = 'png'
-output_format = 'svg'
+output_format = 'png'
+# output_format = 'svg'
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
 path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
@@ -189,12 +189,12 @@ font = {'family' : 'Arial',
 mpl.rc('font', **font)
 
 
-bool_boxwhisker = False # false plots lineplots
+bool_boxwhisker = True # false plots lineplots
 plot_type = "boxwhisker" if bool_boxwhisker else "lineplot"
 
 for dict_key in LIST_OMI_PARAMETERS:
     pass
-    palette ={"low_toxo": '#1690FF', "high_toxo": '#FC5353'}
+    palette ={"low_toxo": '#FCA853', "high_toxo": '#FC5353'} # #1690FF
 
     data = df_data[df_data['treatment'].isin(['media+toxo'])]
     data = data.astype({"time_hours" : str})
@@ -269,7 +269,7 @@ for dict_key in LIST_OMI_PARAMETERS:
     plt.savefig(path_output_figures / f"threshold_{threshold_percent_toxo}_all_data_{analysis_type}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
     plt.show()
 
-#%% CONTROL VS HIGH TOXO CELLS
+#%% CONTROL VS HIGH TOXO CELLS vs KISS AND SPIT
 
 font = {'family' : 'Arial',
         'weight' : 'bold',
@@ -282,12 +282,12 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
 # all conditions if not just media and media+toxo
-data_to_plot = "all"
+# data_to_plot = "all"
 # data_to_plot = "media_vs_high_toxo"
-# data_to_plot = "kiss_and_spit"
+data_to_plot = "kiss_and_spit"
 
-# bool_all_conditions = True
-bool_boxwhisker_plots = False
+bool_boxwhisker_plots = True
+bool_normalize_redox_ratio = True
 
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
@@ -301,8 +301,8 @@ mpl.rcParams['figure.figsize'] =25,15
 
 for dict_key in LIST_OMI_PARAMETERS:
     pass
-    if dict_key != "Redox Ratio":
-        continue
+    # if dict_key != "NAD(P)H Intensity":
+    #     continue
     
     # GET SUBSET OF DTASET
     if data_to_plot == "all":
@@ -375,27 +375,28 @@ for dict_key in LIST_OMI_PARAMETERS:
     
     
     ############ NORMALIZE REDOX RATIO TO CONTROL 
-    data_normalized_to_control = data.copy()
-    if dict_key in ['Redox Ratio']: #
-        pass
-        for tp in np.unique(data['time_hours']):
+    if bool_normalize_redox_ratio:
+        data_normalized_to_control = data.copy()
+        if dict_key in ['Redox Ratio']: #
             pass
-            values_name = LIST_OMI_PARAMETERS[dict_key]
-            
-            ## normalize data to media as control
-            if data_to_plot in ["all", "media_vs_high_toxo"]:
-                control_data_for_timepoint = data[(data['time_hours'] == tp) & 
-                                                  (data['treatment'] == 'media')][values_name]
-            
-            # normalize kiss and spit data to media+inhibitor
-            elif data_to_plot == "kiss_and_spit":
-                control_data_for_timepoint = data[(data['time_hours'] == tp) & 
-                                                  (data['treatment'] == 'media+inhibitor')][values_name]
-            
-            control_mean = control_data_for_timepoint.mean()
-            
-            data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp, values_name] /= control_mean # -= control_mean
-        data = data_normalized_to_control
+            for tp in np.unique(data['time_hours']):
+                pass
+                values_name = LIST_OMI_PARAMETERS[dict_key]
+                
+                ## normalize data to media as control
+                if data_to_plot in ["all", "media_vs_high_toxo"]:
+                    control_data_for_timepoint = data[(data['time_hours'] == tp) & 
+                                                      (data['treatment'] == 'media')][values_name]
+                
+                # normalize kiss and spit data to media+inhibitor
+                elif data_to_plot == "kiss_and_spit":
+                    control_data_for_timepoint = data[(data['time_hours'] == tp) & 
+                                                      (data['treatment'] == 'media+inhibitor')][values_name]
+                
+                control_mean = control_data_for_timepoint.mean()
+                
+                data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp, values_name] /= control_mean # -= control_mean
+            data = data_normalized_to_control
     
     ############ plot boxplots
     if bool_boxwhisker_plots:
