@@ -282,12 +282,12 @@ path_output_figures = path_project / "figures" / analysis_type / "seaborn"
 ##########%% MEDIA VS MEDIA+TOXO - ALL EXPERIMENTS
 
 # all conditions if not just media and media+toxo
-# data_to_plot = "all"
+data_to_plot = "all"
 # data_to_plot = "media_vs_high_toxo"
-data_to_plot = "kiss_and_spit"
+# data_to_plot = "kiss_and_spit"
 
 bool_boxwhisker_plots = True
-bool_normalize_redox_ratio = True
+bool_normalize_redox_ratio = False
 
 plot_type = "boxwhisker" if bool_boxwhisker_plots else "lineplot"
 
@@ -299,7 +299,8 @@ p_values = "ns: p <= 1 | "\
 
 mpl.rcParams['figure.figsize'] =25,15
 
-for dict_key in LIST_OMI_PARAMETERS:
+
+for dict_key in ["Redox Ratio"]: # LIST_OMI_PARAMETERS:
     pass
     # if dict_key != "NAD(P)H Intensity":
     #     continue
@@ -398,6 +399,10 @@ for dict_key in LIST_OMI_PARAMETERS:
                 data_normalized_to_control.loc[data_normalized_to_control['time_hours'] == tp, values_name] /= control_mean # -= control_mean
             data = data_normalized_to_control
     
+    
+    print("Redox ratio: for troubleshooting OMI vs Mass spec, plot not normalized ")
+    print(data.groupby(["time_hours",'treatment'])['redox_ratio_norm_mean'].mean())
+    
     ############ plot boxplots
     if bool_boxwhisker_plots:
         ax = sns.boxplot(
@@ -450,12 +455,12 @@ for dict_key in LIST_OMI_PARAMETERS:
         annotator.apply_and_annotate()
 
     # Finally save fig
-    if data_to_plot == "all":
-        plt.savefig(path_output_figures / "all_conditions" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}_kiss_and_spit.{output_format}", bbox_inches='tight')   
-    elif data_to_plot == "media_vs_high_toxo":
-        plt.savefig(path_output_figures / "media_vs_high_toxo" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
-    elif data_to_plot == "kiss_and_spit":
-        plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
+    # if data_to_plot == "all":
+    #     plt.savefig(path_output_figures / "all_conditions" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}_kiss_and_spit.{output_format}", bbox_inches='tight')   
+    # elif data_to_plot == "media_vs_high_toxo":
+    #     plt.savefig(path_output_figures / "media_vs_high_toxo" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
+    # elif data_to_plot == "kiss_and_spit":
+    #     plt.savefig(path_output_figures / "kiss_and_spit" / f"all_data_{analysis_type}_threshold_{threshold_percent_toxo}_{dict_key}_{plot_type}.{output_format}", bbox_inches='tight')
 
     plt.show()
 
