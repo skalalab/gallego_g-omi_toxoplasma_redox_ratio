@@ -15,7 +15,7 @@ Analysis code for this article is found here. It contains all files that were us
 * skimage == 0.18.3
 * tifffile ==2021.7.2
 
-The computation was done on a pc with Windows 10, i7-770k 64GB RAM, although the code should work on any computer with significantly lower specs.
+The computation was done on a pc with Windows 10, i7-770k 64GB RAM, although the code should work on any computer with lower specs.
 
 <hr>
 
