@@ -25,7 +25,17 @@ list_dataset_dicts = list(path_datasets.glob("*.csv"))
 #for saving representative masks
 path_output_ex_mask = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio\figures\example masks")
 output_format = 'svg'
-
+plt.rcParams['axes.grid'] = False
+SMALL_SIZE = 5
+MEDIUM_SIZE = 9
+BIGGER_SIZE = 13
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=SMALL_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 # DEFINE ANALYSIS TYPE* SEE NOTE BELOW
 # analysis_type = "toxo_inside_cells_high_vs_low"
@@ -69,14 +79,13 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             mask_toxo = load_image(row_data.mask_toxo)
             mask_whole_cell_no_toxo = mask_cell * np.invert(mask_toxo)
             
-            ###
-            fig, ax = plt.subplots(1,3, figsize=(3,1))
-            plt.xlabel(mask_cell, fontsize='9')
-            ax[0].set_title("whole_cell mask", fontsize='9')
+            ### visualize and save masks
+            fig, ax = plt.subplots(1,3, figsize=(8,4)) 
+            ax[0].set_title("whole_cell mask")
             ax[0].imshow(mask_cell)
-            ax[1].set_title("toxo mask", fontsize='9')
+            ax[1].set_title("toxo mask")
             ax[1].imshow(mask_toxo)
-            ax[2].set_title("difference", fontsize='9')
+            ax[2].set_title("difference")
             ax[2].imshow(mask_whole_cell_no_toxo)
             plt.savefig(path_output_ex_mask / f"mask_{idx}_{analysis_type}.{output_format}", bbox_inches='tight')
             plt.show()
