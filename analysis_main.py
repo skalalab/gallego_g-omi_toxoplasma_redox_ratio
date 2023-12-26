@@ -65,6 +65,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
         mask_cell = preprocess_mask(mask_cell, row_data=row_data, debug=False) # see docstring for preprocessing steps
         
         #load toxo mask
+        #don't need for whole cell with toxo included
         if analysis_type == 'cell_without_toxo':
             mask_toxo = load_image(row_data.mask_toxo)
             mask_whole_cell_no_toxo = mask_cell * np.invert(mask_toxo)
