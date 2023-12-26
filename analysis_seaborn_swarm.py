@@ -32,7 +32,7 @@ from tqdm import tqdm
 output_format = 'svg'
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_all_features = list(path_project.glob(f"*all_props_cells_cell_without_toxo.csv"))[0] 
+path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
 df_data = pd.read_csv(path_all_features)
 
 df_data = df_data[(df_data['time_hours'] != 3) &
@@ -75,7 +75,7 @@ LIST_OMI_PARAMETERS = {
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
 analysis_type = 'toxo_inside_cells_high_vs_low'
-path_output_figures = path_project / "figures" / analysis_type / "revised seaborn no toxo"
+path_output_figures = path_project / "figures" / analysis_type / "revised seaborn"
 
 p_values = "ns: p <= 1 | "\
            "*: .01 < p <= .05  | "\
@@ -98,13 +98,13 @@ for dict_key in LIST_OMI_PARAMETERS:
     pass
     palette ={"low_toxo": '#FCA853', "high_toxo": '#FC5353'} # #"media": '#1690FF', 
 
-    data = df_data[df_data['treatment'].isin(['media','media+toxo'])]
+    data = df_data[df_data['treatment']=='media+toxo']
     data = data.astype({"time_hours" : str})
     
     ## threshold df by percent_toxo here
     threshold_percent_toxo = 0.05
     
-    data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
+    #data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
     
     # add col for low and high toxo content
     data['toxo_class'] = np.where(data['percent_toxo'] < threshold_percent_toxo, 'low_toxo', 'high_toxo')
