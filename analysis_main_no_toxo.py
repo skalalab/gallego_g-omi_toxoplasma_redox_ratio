@@ -79,7 +79,7 @@ for dict_dataset in tqdm(list_dataset_dicts[:1]):
             mask_toxo = load_image(row_data.mask_toxo)
             mask_whole_cell_no_toxo = mask_cell * np.invert(mask_toxo)
             
-            ### visualize and save masks
+            ### visualize and save masks: whole cell, toxo, host no toxo
             fig, ax = plt.subplots(1,3, figsize=(8,4)) 
             ax[0].set_title("whole_cell mask")
             ax[0].imshow(mask_cell)
