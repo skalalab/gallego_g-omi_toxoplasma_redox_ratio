@@ -32,7 +32,7 @@ from tqdm import tqdm
 output_format = 'svg'
 #%% Load data
 path_project = Path(r"Z:\0-Projects and Experiments\GG - toxo_omi_redox_ratio")
-path_all_features = list(path_project.glob(f"*all_props_cells.csv"))[0] 
+path_all_features = list(path_project.glob(f"*all_props_cells_cell_without_toxo.csv"))[0] 
 df_data = pd.read_csv(path_all_features)
 
 df_data = df_data[(df_data['time_hours'] != 3) &
@@ -75,7 +75,7 @@ LIST_OMI_PARAMETERS = {
 #%%
 ##########%% MEDIA+TOXO - LOW VS HIGH TOXO --> ALL EXPERIMENTS
 analysis_type = 'toxo_inside_cells_high_vs_low'
-path_output_figures = path_project / "figures" / analysis_type / "revised seaborn"
+path_output_figures = path_project / "figures" / analysis_type / "revised seaborn no toxo"
 
 p_values = "ns: p <= 1 | "\
            "*: .01 < p <= .05  | "\
@@ -96,7 +96,7 @@ plot_type = "swarmplot" if bool_swarm else "lineplot"
 
 for dict_key in LIST_OMI_PARAMETERS:
     pass
-    palette ={"media": '#1690FF', "low_toxo": '#FCA853', "high_toxo": '#FC5353'} # #1690FF
+    palette ={"low_toxo": '#FCA853', "high_toxo": '#FC5353'} # #"media": '#1690FF', 
 
     data = df_data[df_data['treatment'].isin(['media','media+toxo'])]
     data = data.astype({"time_hours" : str})
@@ -104,10 +104,10 @@ for dict_key in LIST_OMI_PARAMETERS:
     ## threshold df by percent_toxo here
     threshold_percent_toxo = 0.05
     
-    # data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
+    data = data.drop(data[(data['treatment']=='media+toxo')&(data['percent_toxo'] < threshold_percent_toxo)].index)
     
     # add col for low and high toxo content
-    #data['toxo_class'] = np.where(data['percent_toxo'] < threshold_percent_toxo, 'low_toxo', 'high_toxo')
+    data['toxo_class'] = np.where(data['percent_toxo'] < threshold_percent_toxo, 'low_toxo', 'high_toxo')
     
     # Option 1 use np.select
     # conditions = [data['percent_toxo'] == 0, (data['percent_toxo'] < threshold_percent_toxo & data['percent_toxo'] > 0), data['percent_toxo'] > threshold_percent_toxo]
@@ -117,15 +117,15 @@ for dict_key in LIST_OMI_PARAMETERS:
     
     # Option 2 nest np.where
     #GOOD JOB JOHN
-    data['toxo_class'] = np.where(data['percent_toxo'] == 0 , 'media', 
-                                  np.where(data['percent_toxo'] < threshold_percent_toxo, 'low_toxo', 'high_toxo'))
+    # data['toxo_class'] = np.where(data['percent_toxo'] == 0 , 'media', 
+    #                               np.where(data['percent_toxo'] < threshold_percent_toxo, 'low_toxo', 'high_toxo'))
     
     
     x = "time_hours"
     y = LIST_OMI_PARAMETERS[dict_key]
     #y_err = 
     hue = "toxo_class"
-    hue_order=['media','low_toxo','high_toxo']
+    hue_order=['low_toxo','high_toxo']
     order = list(map(str,np.unique(df_data['time_hours'])))
     pairs=[((str(x) , 'low_toxo'), (str(x),'high_toxo')) for x in np.unique(df_data["time_hours"]) ]
         
